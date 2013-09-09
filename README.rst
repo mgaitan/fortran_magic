@@ -11,12 +11,13 @@ namespace.
 
 
 :author: Martín Gaitán <gaitan@gmail.com>
-
+:homepage: https://github.com/mgaitan/fortran_magic
+:example: see `this notebook <http://nbviewer.ipython.org/urls/raw.github.com/mgaitan/fortran_magic/master/example_notebook.ipynb>`_  
 
 Install
 =======
 
-To install the extension with `%install_ext` ::
+Install the extension with `%install_ext` ::
 
     In[1]: %install_ext https://raw.github.com/mgaitan/fortran_magic/master/fortranmagic.py
 
@@ -24,7 +25,7 @@ To install the extension with `%install_ext` ::
 Usage
 =====
 
-Once it's installed, you can load it with `%load_ext fortranmagic` put your Fortran code in a cell started with the cell magic `%%fortran``.
+Once it's installed, you can load it with `%load_ext fortranmagic`. Then put your Fortran code in a cell started with the cell magic `%%fortran``.
 For example::
 
     In[2]: %load_ext fortranmagic
