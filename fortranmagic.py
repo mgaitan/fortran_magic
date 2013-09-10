@@ -4,12 +4,8 @@
 Fortran 90/f2py magic
 =====================
 
-Usage
-=====
-
-``%%fortran``
-
 {FORTRAN_DOC}
+
 
 
 Author:
@@ -58,6 +54,17 @@ class FortranMagics(Magics):
         code. This file is then compiled. The resulting module
         is imported and all of its symbols are injected into the user's
         namespace.
+
+
+        Usage
+        =====
+        Prepend ``%%fortran`` to your fortran code in a cell::
+
+        ``%%fortran
+
+        ! put your code here.
+        ``
+
 
         """
         code = cell if cell.endswith('\n') else cell+'\n'
