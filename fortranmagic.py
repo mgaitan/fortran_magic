@@ -76,7 +76,9 @@ class FortranMagics(Magics):
 
         module_name = "_fortran_magic_" + \
                       hashlib.md5(str(key).encode('utf-8')).hexdigest()
-        module_path = os.path.join(lib_dir, module_name + '.so')
+
+        mod_ext = '.pyd' if 'win' in sys.platform.lower() else '.so'
+        module_path = os.path.join(lib_dir, module_name + mod_ext)
 
         f90_file = os.path.join(lib_dir, module_name + '.f90')
         f90_file = py3compat.cast_bytes_py2(f90_file,
