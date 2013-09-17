@@ -31,6 +31,8 @@ from IPython.utils import py3compat
 from IPython.utils.path import get_ipython_cache_dir
 from numpy.f2py import f2py2e
 
+from distutils.core import Distribution
+from distutils.command.build_ext import build_ext
 
 @magics_class
 class FortranMagics(Magics):
@@ -77,8 +79,7 @@ class FortranMagics(Magics):
         module_name = "_fortran_magic_" + \
                       hashlib.md5(str(key).encode('utf-8')).hexdigest()
 
-        mod_ext = '.pyd' if 'win' in sys.platform.lower() else '.so'
-        module_path = os.path.join(lib_dir, module_name + mod_ext)
+        module_path = os.path.join(lib_dir, module_name + self.so_ext)
 
         f90_file = os.path.join(lib_dir, module_name + '.f90')
         f90_file = py3compat.cast_bytes_py2(f90_file,
@@ -97,6 +98,25 @@ class FortranMagics(Magics):
         self._code_cache[key] = module_name
         module = imp.load_dynamic(module_name, module_path)
         self._import_all(module)
+
+    @property
+    def so_ext(self):
+        """The extension suffix for compiled modules."""
+        try:
+            return self._so_ext
+        except AttributeError:
+
+            dist = Distribution()
+            config_files = dist.find_config_files()
+            try:
+                config_files.remove('setup.cfg')
+            except ValueError:
+                pass
+            dist.parse_config_files(config_files)
+            build_extension = build_ext(dist)
+            build_extension.finalize_options()
+            self._so_ext = build_extension.get_ext_filename('')
+            return self._so_ext
 
 __doc__ = __doc__.format(FORTRAN_DOC=' ' * 8 + FortranMagics.fortran.__doc__)
 
