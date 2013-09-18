@@ -28,6 +28,7 @@ except ImportError:
 
 from IPython.core.error import UsageError
 from IPython.core.magic import Magics, magics_class, cell_magic
+from IPython.core import display
 from IPython.utils import py3compat
 from IPython.utils.io import capture_output
 from IPython.utils.path import get_ipython_cache_dir
@@ -35,6 +36,7 @@ from numpy.f2py import f2py2e
 
 from distutils.core import Distribution
 from distutils.command.build_ext import build_ext
+
 
 @magics_class
 class FortranMagics(Magics):
@@ -108,7 +110,6 @@ class FortranMagics(Magics):
         module = imp.load_dynamic(module_name, module_path)
         self._import_all(module)
 
-
     @property
     def so_ext(self):
         """The extension suffix for compiled modules."""
@@ -134,3 +135,9 @@ __doc__ = __doc__.format(FORTRAN_DOC=' ' * 8 + FortranMagics.fortran.__doc__)
 def load_ipython_extension(ip):
     """Load the extension in IPython."""
     ip.register_magics(FortranMagics)
+
+    # enable fortran highlight
+    patch = ("IPython.config.cell_magic_highlight['magic_fortran'] = {'reg':[/^%%fortran/]};")
+    js = display.Javascript(data=patch,
+                            lib=["https://raw.github.com/marijnh/CodeMirror/master/mode/fortran/fortran.js"])
+    display.display_javascript(js)
