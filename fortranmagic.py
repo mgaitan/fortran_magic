@@ -52,7 +52,8 @@ class FortranMagics(Magics):
         self._reloads = {}
         self._code_cache = {}
         self._lib_dir = os.path.join(get_ipython_cache_dir(), 'fortran')
-
+        if not os.path.exists(self._lib_dir):
+            os.makedirs(self._lib_dir)
 
     def _import_all(self, module):
         for k, v in module.__dict__.items():
@@ -113,6 +114,93 @@ class FortranMagics(Magics):
         elif len(args.help_link) > 0:
             self._run_f2py(['--help-link', args.help_link], True)
 
+
+    @magic_arguments.magic_arguments()
+    @magic_arguments.argument(
+        '--fcompiler',
+        choices=allowed_fcompilers,
+        help="Specify Fortran compiler type by vendor. "
+             "See %f2py --help-fcompiler to list available on your platform",
+    )
+    @magic_arguments.argument(
+        '--compiler',
+        choices=allowed_compilers,
+        help="""Specify C compiler type (as defined by distutils).
+             See %f2py --help-compiler"""
+    )
+    @magic_arguments.argument(
+        '--f90flags', help="Specify F90 compiler flags"
+    )
+    @magic_arguments.argument(
+        '--f77flags', help="Specify F77 compiler flags"
+    )
+    @magic_arguments.argument(
+        '--opt', help="Specify optimization flags"
+    )
+    @magic_arguments.argument(
+        '--arch', help="Specify architecture specific optimization flags"
+    )
+    @magic_arguments.argument(
+        '--noopt', action="store_true", help="Compile without optimization"
+    )
+    @magic_arguments.argument(
+        '--noarch', action="store_true", help="Compile without arch-dependent optimization"
+    )
+    @magic_arguments.argument(
+        '--debug', action="store_true", help="Compile with debugging information"
+    )
+    @magic_arguments.argument(
+        '--link', action='append', default=[],
+           help="""Link extension module with <resources> as defined
+                   by numpy.distutils/system_info.py. E.g. to link
+                   with optimized LAPACK libraries (vecLib on MacOSX,
+                   ATLAS elsewhere), use --link lapack_opt.
+                   See also --help-link switch."""
+    )
+    @cell_magic
+    def fortran(self, line, cell):
+        """Compile and import everything from a Fortran code cell, using f2py.
+
+        The contents of the cell are written to a `.f90` file in the
+        directory `IPYTHONDIR/fortran` using a filename with the hash of the
+        code. This file is then compiled. The resulting module
+        is imported and all of its symbols are injected into the user's
+        namespace.
+
+
+        Usage
+        =====
+        Prepend ``%%fortran`` to your fortran code in a cell::
+
+        ``%%fortran
+
+        ! put your code here.
+        ``
+
+
+        """
+
+        args = magic_arguments.parse_argstring(self.fortran, line)
+
+        code = cell if cell.endswith('\n') else cell+'\n'
+        key = code, sys.version_info, sys.executable, f2py2e.f2py_version
+
+        module_name = "_fortran_magic_" + \
+                      hashlib.md5(str(key).encode('utf-8')).hexdigest()
+
+        module_path = os.path.join(lib_dir, module_name + self.so_ext)
+
+        f90_file = os.path.join(lib_dir, module_name + '.f90')
+        f90_file = py3compat.cast_bytes_py2(f90_file,
+                                            encoding=sys.getfilesystemencoding())
+        with io.open(f90_file, 'w', encoding='utf-8') as f:
+            f.write(code)
+
+        self._run_f2py(['-m', module_name, '-c', f90_file])
+
+        self._code_cache[key] = module_name
+        module = imp.load_dynamic(module_name, module_path)
+        self._import_all(module)
 
     @property
     def so_ext(self):
