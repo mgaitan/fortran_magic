@@ -26,8 +26,10 @@ try:
 except ImportError:
     import md5 as hashlib
 
+from IPython.core.error import UsageError
 from IPython.core.magic import Magics, magics_class, cell_magic
 from IPython.utils import py3compat
+from IPython.utils.io import capture_output
 from IPython.utils.path import get_ipython_cache_dir
 from numpy.f2py import f2py2e
 
@@ -87,17 +89,25 @@ class FortranMagics(Magics):
         with io.open(f90_file, 'w', encoding='utf-8') as f:
             f.write(code)
 
-        cmd = "f2py -m %s -c %s" % (module_name, f90_file)
-
-        # move to lib_dir temporally
-        pwd = os.getcwdu()
-        os.chdir(lib_dir)
-        self.shell.getoutput(cmd)
-        os.chdir(pwd)
+        old_argv = sys.argv
+        old_cwd = os.getcwdu() if sys.version_info[0] == 2 else os.getcwd()
+        try:
+            sys.argv = ['f2py', '-m', module_name, '-c', f90_file]
+            os.chdir(lib_dir)
+            try:
+                with capture_output() as captured:
+                    f2py2e.run_compile()
+            except SystemExit as e:
+                captured()
+                raise UsageError(str(e))
+        finally:
+            sys.argv = old_argv
+            os.chdir(old_cwd)
 
         self._code_cache[key] = module_name
         module = imp.load_dynamic(module_name, module_path)
         self._import_all(module)
+
 
     @property
     def so_ext(self):
