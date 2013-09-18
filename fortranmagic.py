@@ -28,14 +28,17 @@ except ImportError:
 
 from IPython.core.error import UsageError
 from IPython.core.magic import Magics, magics_class, cell_magic
-from IPython.core import display
+from IPython.core import display, magic_arguments
 from IPython.utils import py3compat
 from IPython.utils.io import capture_output
 from IPython.utils.path import get_ipython_cache_dir
 from numpy.f2py import f2py2e
-
+from numpy.distutils import fcompiler
 from distutils.core import Distribution
 from distutils.command.build_ext import build_ext
+
+fcompiler.load_all_fcompiler_classes()
+allowed_fcompiler = fcompiler.fcompiler_class.keys()
 
 
 @magics_class
@@ -51,6 +54,12 @@ class FortranMagics(Magics):
             if not k.startswith('__'):
                 self.shell.push({k: v})
 
+    @magic_arguments.magic_arguments()
+    @magic_arguments.argument(
+        '--fcompiler',
+        choices=allowed_fcompiler,
+        help="Specify Fortran compiler type by vendor",
+    )
     @cell_magic
     def fortran(self, line, cell):
         """Compile and import everything from a Fortran code cell, using f2py.
@@ -73,6 +82,8 @@ class FortranMagics(Magics):
 
 
         """
+        args = magic_arguments.parse_argstring(self.fortran, line)
+        print(args)
         code = cell if cell.endswith('\n') else cell+'\n'
         lib_dir = os.path.join(get_ipython_cache_dir(), 'fortran')
         key = code, sys.version_info, sys.executable, f2py2e.f2py_version
