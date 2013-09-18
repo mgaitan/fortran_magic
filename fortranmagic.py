@@ -114,48 +114,12 @@ class FortranMagics(Magics):
         elif len(args.help_link) > 0:
             self._run_f2py(['--help-link', args.help_link], True)
 
-
     @magic_arguments.magic_arguments()
     @magic_arguments.argument(
         '--fcompiler',
-        choices=allowed_fcompilers,
-        help="Specify Fortran compiler type by vendor. "
-             "See %f2py --help-fcompiler to list available on your platform",
-    )
-    @magic_arguments.argument(
-        '--compiler',
-        choices=allowed_compilers,
-        help="""Specify C compiler type (as defined by distutils).
-             See %f2py --help-compiler"""
-    )
-    @magic_arguments.argument(
-        '--f90flags', help="Specify F90 compiler flags"
-    )
-    @magic_arguments.argument(
-        '--f77flags', help="Specify F77 compiler flags"
-    )
-    @magic_arguments.argument(
-        '--opt', help="Specify optimization flags"
-    )
-    @magic_arguments.argument(
-        '--arch', help="Specify architecture specific optimization flags"
-    )
-    @magic_arguments.argument(
-        '--noopt', action="store_true", help="Compile without optimization"
-    )
-    @magic_arguments.argument(
-        '--noarch', action="store_true", help="Compile without arch-dependent optimization"
-    )
-    @magic_arguments.argument(
-        '--debug', action="store_true", help="Compile with debugging information"
-    )
-    @magic_arguments.argument(
-        '--link', action='append', default=[],
-           help="""Link extension module with <resources> as defined
-                   by numpy.distutils/system_info.py. E.g. to link
-                   with optimized LAPACK libraries (vecLib on MacOSX,
-                   ATLAS elsewhere), use --link lapack_opt.
-                   See also --help-link switch."""
+        # choices=allowed_fcompilers,
+        help="""Specify Fortran compiler type by vendor.
+                See %%f2py --help-fcompiler to list available on your platform"""
     )
     @cell_magic
     def fortran(self, line, cell):
@@ -180,7 +144,7 @@ class FortranMagics(Magics):
 
         """
 
-        args = magic_arguments.parse_argstring(self.fortran, line)
+        # args = magic_arguments.parse_argstring(self.fortran, line)
 
         code = cell if cell.endswith('\n') else cell+'\n'
         key = code, sys.version_info, sys.executable, f2py2e.f2py_version
