@@ -40,9 +40,9 @@ from distutils.command.build_ext import build_ext
 
 fcompiler.load_all_fcompiler_classes()
 
+
 @magics_class
 class FortranMagics(Magics):
-
 
     allowed_fcompilers = sorted(fcompiler.fcompiler_class.keys())
     allowed_compilers = sorted(compiler_class.keys())
@@ -60,7 +60,7 @@ class FortranMagics(Magics):
             if not k.startswith('__'):
                 self.shell.push({k: v})
 
-    def _run_f2py(self, argv, show_captured=False):
+    def _run_f2py(self, argv, show_captured=False, verbose=False):
         """
         Here we directly call the numpy.f2py.f2py2e.run_compile() entry point,
         after some small amount of setup to get sys.argv and the current
@@ -70,6 +70,8 @@ class FortranMagics(Magics):
         old_cwd = os.getcwdu() if sys.version_info[0] == 2 else os.getcwd()
         try:
             sys.argv = ['f2py'] + list(map(str, argv))
+            if verbose:
+                print("Running '%s'" % ' '.join(sys.argv))
             os.chdir(self._lib_dir)
             try:
                 with capture_output() as captured:
@@ -149,18 +151,18 @@ class FortranMagics(Magics):
         '--debug', action="store_true", help="Compile with debugging information"
     )
     @magic_arguments.argument(
-        '--link',
-           help="""Link extension module with <resources> as defined
-                   by numpy.distutils/system_info.py. E.g. to link
-                   with optimized LAPACK libraries (vecLib on MacOSX,
-                   ATLAS elsewhere), use --link lapack_opt.
-                   See also --help-link switch."""
+        '--link', action='append', default=[],
+        help="""Link extension module with LINK resource, as defined
+                by numpy.distutils/system_info.py. E.g. to link
+                with optimized LAPACK libraries (vecLib on MacOSX,
+                ATLAS elsewhere), use --link lapack_opt.
+                See also %%f2py --help-link switch."""
     )
     @cell_magic
     def fortran(self, line, cell):
         """Compile and import everything from a Fortran code cell, using f2py.
 
-        The contents of the cell are written to a `.f90` file in the
+        The content of the cell is written to a `.f90` file in the
         directory `IPYTHONDIR/fortran` using a filename with the hash of the
         code. This file is then compiled. The resulting module
         is imported and all of its symbols are injected into the user's
@@ -183,13 +185,15 @@ class FortranMagics(Magics):
         # boolean flags
         f2py_args = ['--%s' % k for k, v in vars(args).items() if v is True]
 
-        if args.link:
-            print(args.link)
-
         kw = ['--%s=%s' % (k, v) for k, v in vars(args).items()
                           if isinstance(v, basestring)]
-
         f2py_args.extend(kw)
+
+        # link resoucers
+        if args.link:
+            resources = ['--link-%s' % r for r in args.link]
+            f2py_args.extend(resources)
+
         code = cell if cell.endswith('\n') else cell+'\n'
         key = code, sys.version_info, sys.executable, f2py2e.f2py_version
 
@@ -204,7 +208,8 @@ class FortranMagics(Magics):
         with io.open(f90_file, 'w', encoding='utf-8') as f:
             f.write(code)
 
-        self._run_f2py(f2py_args + ['-m', module_name, '-c', f90_file])
+        self._run_f2py(f2py_args + ['-m', module_name, '-c', f90_file],
+                       verbose=False)
 
         self._code_cache[key] = module_name
         module = imp.load_dynamic(module_name, module_path)
