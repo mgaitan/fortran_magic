@@ -12,7 +12,7 @@ namespace.
 
 :author: Martín Gaitán <gaitan@gmail.com>
 :homepage: https://github.com/mgaitan/fortran_magic
-:documentation: see `this notebook`__
+:documentation: see this notebook__
 
 __ documentation_
 .. _documentation:  http://nbviewer.ipython.org/urls/raw.github.com/mgaitan/fortran_magic/master/documentation.ipynb`_
