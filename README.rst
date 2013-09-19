@@ -12,7 +12,7 @@ namespace.
 
 :author: Martín Gaitán <gaitan@gmail.com>
 :homepage: https://github.com/mgaitan/fortran_magic
-:example: see `this notebook <http://nbviewer.ipython.org/urls/raw.github.com/mgaitan/fortran_magic/master/example_notebook.ipynb>`_  
+:documentation: see `this notebook <http://nbviewer.ipython.org/urls/raw.github.com/mgaitan/fortran_magic/master/example_notebook.ipynb>`_  
 
 Install
 =======
@@ -47,4 +47,6 @@ Every symbol is automatically imported. So `f1` is already available::
     In[4]:  f1(1.0, 2.1415)
     Out[4]: 9.26574066397734e-05
 
+
+See the example for details
 
