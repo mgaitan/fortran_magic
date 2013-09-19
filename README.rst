@@ -12,7 +12,11 @@ namespace.
 
 :author: Martín Gaitán <gaitan@gmail.com>
 :homepage: https://github.com/mgaitan/fortran_magic
-:documentation: see `this notebook <http://nbviewer.ipython.org/urls/raw.github.com/mgaitan/fortran_magic/master/documentation.ipynb>`_  
+:documentation: see `this notebook`__
+
+__ documentation_
+.. _documentation:  http://nbviewer.ipython.org/urls/raw.github.com/mgaitan/fortran_magic/master/documentation.ipynb`_
+ 
 
 Install
 =======
@@ -22,8 +26,8 @@ Install the extension with `%install_ext` ::
     In[1]: %install_ext https://raw.github.com/mgaitan/fortran_magic/master/fortranmagic.py
 
 
-Usage
-=====
+Basic usage
+===========
 
 Once it's installed, you can load it with `%load_ext fortranmagic`. Then put your Fortran code in a cell started with the cell magic `%%fortran``.
 For example::
@@ -48,5 +52,5 @@ Every symbol is automatically imported. So `f1` is already available::
     Out[4]: 9.26574066397734e-05
 
 
-See the example for details
+See the documentation_ for details
 
