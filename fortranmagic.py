@@ -55,12 +55,17 @@ class FortranMagics(Magics):
         if not os.path.exists(self._lib_dir):
             os.makedirs(self._lib_dir)
 
-    def _import_all(self, module):
+    def _import_all(self, module, verbosity=0):
+        imported = []
         for k, v in module.__dict__.items():
             if not k.startswith('__'):
                 self.shell.push({k: v})
+                imported.append(k)
+        if verbosity > 0 and imported:
+            print("\nOk. The following fortran objects "
+                  "are ready to use: %s" % ", ".join(imported))
 
-    def _run_f2py(self, argv, show_captured=False, verbose=False):
+    def _run_f2py(self, argv, show_captured=False, verbosity=0):
         """
         Here we directly call the numpy.f2py.f2py2e.run_compile() entry point,
         after some small amount of setup to get sys.argv and the current
@@ -70,13 +75,14 @@ class FortranMagics(Magics):
         old_cwd = os.getcwdu() if sys.version_info[0] == 2 else os.getcwd()
         try:
             sys.argv = ['f2py'] + list(map(str, argv))
-            if verbose:
-                print("Running '%s'" % ' '.join(sys.argv))
+            if verbosity > 1:
+                print("Running...\n   %s" % ' '.join(sys.argv))
+
             os.chdir(self._lib_dir)
             try:
                 with capture_output() as captured:
                     f2py2e.main()
-                if show_captured:
+                if show_captured or verbosity > 2:
                     captured()
             except SystemExit as e:
                 captured()
@@ -87,47 +93,58 @@ class FortranMagics(Magics):
 
     @magic_arguments.magic_arguments()
     @magic_arguments.argument(
-        '--help-link', default='all', required=False,
+        '--resources', action="store_true",
         help="""List system resources found by system_info.py.
-                Optionally give a resource name.
-                E.g. try '--help-link lapack_opt.
 
-                See alsof
-                %%fortran --link <resource> switch.
+                See also
+                %%f2py_help --link <resource> switch.
                 """
     )
     @magic_arguments.argument(
-        '--help-fcompiler', action="store_true",
+        '--link',
+        help="""Given a resource name, show what it foun.
+                E.g. try '--link lapack.
+
+                See also
+                %%f2py_help --link <resource> switch.
+                """
+    )
+    @magic_arguments.argument(
+        '--fcompiler', action="store_true",
         help="List available Fortran compilers",
     )
     @magic_arguments.argument(
-        '--help-compiler', action="store_true",
+        '--compiler', action="store_true",
         help="List available C compilers",
     )
     @line_magic
-    def f2py(self, line):
-        args = magic_arguments.parse_argstring(self.f2py, line)
-        if args.help_fcompiler:
+    def f2py_help(self, line):
+        args = magic_arguments.parse_argstring(self.f2py_help, line)
+        if args.fcompiler:
             self._run_f2py(['-c', '--help-fcompiler'], True)
-        elif args.help_compiler:
+        elif args.compiler:
             self._run_f2py(['-c', '--help-compiler'], True)
-        elif len(args.help_link) == 0:
-            self._run_f2py(['--help-link'])
-        elif len(args.help_link) > 0:
-            self._run_f2py(['--help-link', args.help_link], True)
+        elif args.resources:
+            self._run_f2py(['--help-link'], True)
+        elif args.link:
+            self._run_f2py(['--help-link', args.link], True)
 
     @magic_arguments.magic_arguments()
+    @magic_arguments.argument(
+        "-v", "--verbosity", action="count", default=0,
+        help="increase output verbosity"
+    )
     @magic_arguments.argument(
         '--fcompiler',
         choices=allowed_fcompilers,
         help="""Specify Fortran compiler type by vendor.
-                See %%f2py --help-fcompiler to list available on your platform""",
+                See %%f2py_help --fcompiler""",
     )
     @magic_arguments.argument(
         '--compiler',
         choices=allowed_compilers,
         help="""Specify C compiler type (as defined by distutils).
-                See %%f2py --help-compiler"""
+                See %%f2py_help --compiler"""
     )
     @magic_arguments.argument(
         '--f90flags', help="Specify F90 compiler flags"
@@ -156,7 +173,7 @@ class FortranMagics(Magics):
                 by numpy.distutils/system_info.py. E.g. to link
                 with optimized LAPACK libraries (vecLib on MacOSX,
                 ATLAS elsewhere), use --link lapack_opt.
-                See also %%f2py --help-link switch."""
+                See also %%f2py_help --resources switch."""
     )
     @cell_magic
     def fortran(self, line, cell):
@@ -209,11 +226,11 @@ class FortranMagics(Magics):
             f.write(code)
 
         self._run_f2py(f2py_args + ['-m', module_name, '-c', f90_file],
-                       verbose=False)
+                       verbosity=args.verbosity)
 
         self._code_cache[key] = module_name
         module = imp.load_dynamic(module_name, module_path)
-        self._import_all(module)
+        self._import_all(module, verbosity=args.verbosity)
 
     @property
     def so_ext(self):
