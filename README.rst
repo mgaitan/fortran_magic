@@ -59,5 +59,3 @@ Every symbol is automatically imported. So `f1` is already available::
 
 
 See the documentation_ for details.
-
-..include:: CHANGES.rst

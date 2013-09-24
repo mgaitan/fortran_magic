@@ -2,7 +2,7 @@
 from setuptools import setup
 from fortranmagic import __version__
 
-long_description = (''.join(open('README.rst').readlines()[:-1]) + '\n\n' +
+long_description = (open('README.rst').read() + '\n\n' +
                     open('CHANGES.rst').read())
 
 setup(
