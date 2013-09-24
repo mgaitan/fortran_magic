@@ -1,3 +1,5 @@
+
+=============
 Fortran magic
 =============
 
@@ -52,5 +54,6 @@ Every symbol is automatically imported. So `f1` is already available::
     Out[4]: 9.26574066397734e-05
 
 
-See the documentation_ for details
+See the documentation_ for details.
 
+..include:: CHANGES.rst

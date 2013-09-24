@@ -10,8 +10,6 @@ Fortran 90/f2py magic
 
 Author:
 * Martín Gaitán <gaitan@gmail.com>
-
-This code was heavily inspired in the Cython magic
 """
 
 from __future__ import print_function
@@ -38,6 +36,7 @@ from distutils.core import Distribution
 from distutils.ccompiler import compiler_class
 from distutils.command.build_ext import build_ext
 
+__version__ = '0.2.1'
 fcompiler.load_all_fcompiler_classes()
 
 
