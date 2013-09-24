@@ -23,7 +23,11 @@ __ documentation_
 Install
 =======
 
-Install the extension with `%install_ext` ::
+You can install or upgrade via pip
+
+    pip install -U fortran-magic
+
+or directly from the repository using the `%install_ext` magic command::
 
     In[1]: %install_ext https://raw.github.com/mgaitan/fortran_magic/master/fortranmagic.py
 
