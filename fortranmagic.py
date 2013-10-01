@@ -40,11 +40,83 @@ __version__ = '0.2.1'
 fcompiler.load_all_fcompiler_classes()
 
 
+def compose(*decors):
+    """Helper to compose decorators::
+
+        @a
+        @b
+        @c
+        def f():
+            pass
+
+    Would be equivalent to::
+
+        @compose(a, b, c)
+        def f():
+            ...
+    """
+    def composed(f):
+        for decor in reversed(decors):
+            f = decor(f)
+        return f
+    return composed
+
+
 @magics_class
 class FortranMagics(Magics):
 
     allowed_fcompilers = sorted(fcompiler.fcompiler_class.keys())
     allowed_compilers = sorted(compiler_class.keys())
+
+    arguments = compose(
+        magic_arguments.magic_arguments(),
+        magic_arguments.argument(
+            "-v", "--verbosity", action="count", default=0,
+            help="increase output verbosity"
+        ),
+        magic_arguments.argument(
+            '--fcompiler',
+            choices=allowed_fcompilers,
+            help="""Specify Fortran compiler type by vendor.
+                 See %%f2py_help --fcompiler""",
+        ),
+        magic_arguments.argument(
+            '--compiler',
+            choices=allowed_compilers,
+            help="""Specify C compiler type (as defined by distutils).
+                    See %%f2py_help --compiler"""
+        ),
+        magic_arguments.argument(
+            '--f90flags', help="Specify F90 compiler flags"
+        ),
+        magic_arguments.argument(
+            '--f77flags', help="Specify F77 compiler flags"
+        ),
+        magic_arguments.argument(
+            '--opt', help="Specify optimization flags"
+        ),
+        magic_arguments.argument(
+            '--arch', help="Specify architecture specific optimization flags"
+        ),
+        magic_arguments.argument(
+            '--noopt', action="store_true", help="Compile without optimization"
+        ),
+        magic_arguments.argument(
+            '--noarch', action="store_true", help="Compile without "
+            "arch-dependent optimization"
+        ),
+        magic_arguments.argument(
+            '--debug', action="store_true", help="Compile with debugging "
+            "information"
+        ),
+        magic_arguments.argument(
+            '--link', action='append', default=[],
+            help="""Link extension module with LINK resource, as defined
+                    by numpy.distutils/system_info.py. E.g. to link
+                    with optimized LAPACK libraries (vecLib on MacOSX,
+                    ATLAS elsewhere), use --link lapack_opt.
+                    See also %%f2py_help --resources switch."""
+        ))
 
     def __init__(self, shell):
         super(FortranMagics, self).__init__(shell)
@@ -128,52 +200,7 @@ class FortranMagics(Magics):
         elif args.link:
             self._run_f2py(['--help-link', args.link], True)
 
-    @magic_arguments.magic_arguments()
-    @magic_arguments.argument(
-        "-v", "--verbosity", action="count", default=0,
-        help="increase output verbosity"
-    )
-    @magic_arguments.argument(
-        '--fcompiler',
-        choices=allowed_fcompilers,
-        help="""Specify Fortran compiler type by vendor.
-                See %%f2py_help --fcompiler""",
-    )
-    @magic_arguments.argument(
-        '--compiler',
-        choices=allowed_compilers,
-        help="""Specify C compiler type (as defined by distutils).
-                See %%f2py_help --compiler"""
-    )
-    @magic_arguments.argument(
-        '--f90flags', help="Specify F90 compiler flags"
-    )
-    @magic_arguments.argument(
-        '--f77flags', help="Specify F77 compiler flags"
-    )
-    @magic_arguments.argument(
-        '--opt', help="Specify optimization flags"
-    )
-    @magic_arguments.argument(
-        '--arch', help="Specify architecture specific optimization flags"
-    )
-    @magic_arguments.argument(
-        '--noopt', action="store_true", help="Compile without optimization"
-    )
-    @magic_arguments.argument(
-        '--noarch', action="store_true", help="Compile without arch-dependent optimization"
-    )
-    @magic_arguments.argument(
-        '--debug', action="store_true", help="Compile with debugging information"
-    )
-    @magic_arguments.argument(
-        '--link', action='append', default=[],
-        help="""Link extension module with LINK resource, as defined
-                by numpy.distutils/system_info.py. E.g. to link
-                with optimized LAPACK libraries (vecLib on MacOSX,
-                ATLAS elsewhere), use --link lapack_opt.
-                See also %%f2py_help --resources switch."""
-    )
+    @arguments
     @cell_magic
     def fortran(self, line, cell):
         """Compile and import everything from a Fortran code cell, using f2py.
@@ -202,7 +229,7 @@ class FortranMagics(Magics):
         f2py_args = ['--%s' % k for k, v in vars(args).items() if v is True]
 
         kw = ['--%s=%s' % (k, v) for k, v in vars(args).items()
-                          if isinstance(v, basestring)]
+              if isinstance(v, basestring)]
         f2py_args.extend(kw)
 
         # link resoucers
