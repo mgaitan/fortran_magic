@@ -31,7 +31,7 @@ from IPython.utils import py3compat
 from IPython.utils.io import capture_output
 from IPython.utils.path import get_ipython_cache_dir
 from IPython.config.configurable import Configurable
-from IPython.utils.traitlets import Int, Float, Unicode, Bool
+from IPython.utils.traitlets import Int, Unicode
 from numpy.f2py import f2py2e
 from numpy.distutils import fcompiler
 from distutils.core import Distribution
@@ -66,7 +66,8 @@ def compose(*decors):
 
 class FortranConfig(Configurable):
     verbosity = Int(0, config=True)
-    fcompiler = Unicode('', allow_none=True, config=True)
+    fcompiler = Unicode('', config=True)
+    # .. other configurable arguments
 
 
 @magics_class
@@ -75,7 +76,7 @@ class FortranMagics(Magics, FortranConfig):
     allowed_fcompilers = sorted(fcompiler.fcompiler_class.keys())
     allowed_compilers = sorted(compiler_class.keys())
 
-    arguments = compose(
+    my_magic_arguments = compose(
         magic_arguments.magic_arguments(),
         magic_arguments.argument(
             "-v", "--verbosity", action="count", default=0,
@@ -209,7 +210,29 @@ class FortranMagics(Magics, FortranConfig):
         elif args.link:
             self._run_f2py(['--help-link', args.link], True)
 
-    @arguments
+    @my_magic_arguments
+    @magic_arguments.argument(
+            '--defaults', action="store_true", help="Delete custom configuration "
+            "and back to default"
+        )
+    @line_magic
+    def fortran_config(self, line):
+        """override the default arguments and configuration for \\%%fortran
+        and store them persistently.
+
+        ``%fortran_config --defaults`` back to default configs"""
+        args = magic_arguments.parse_argstring(self.fortran_defaults, line)
+        if args.defaults:
+            try:
+                self.shell.db['fortran']
+                print("Deleted custom config. Back to default arguments for \\%%fortran")
+            except KeyError:
+                print("No custom config found for \\%%fortran")
+        else:
+            self.shell.db['fortran'] = args
+            print("New default arguments for \\%%fortran:\n\t%s" % args)
+
+    @my_magic_arguments
     @cell_magic
     def fortran(self, line, cell):
         """Compile and import everything from a Fortran code cell, using f2py.
@@ -232,6 +255,13 @@ class FortranMagics(Magics, FortranConfig):
 
 
         """
+        try:
+            args = self.shell.db['fortran']
+        except KeyError:
+            args = {}
+
+        # update db_args. WIP
+
         args = magic_arguments.parse_argstring(self.fortran, line)
 
         # boolean flags
