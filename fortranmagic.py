@@ -30,6 +30,8 @@ from IPython.core import display, magic_arguments
 from IPython.utils import py3compat
 from IPython.utils.io import capture_output
 from IPython.utils.path import get_ipython_cache_dir
+from IPython.config.configurable import Configurable
+from IPython.utils.traitlets import Int, Float, Unicode, Bool
 from numpy.f2py import f2py2e
 from numpy.distutils import fcompiler
 from distutils.core import Distribution
@@ -62,8 +64,13 @@ def compose(*decors):
     return composed
 
 
+class FortranConfig(Configurable):
+    verbosity = Int(0, config=True)
+    fcompiler = Unicode('', allow_none=True, config=True)
+
+
 @magics_class
-class FortranMagics(Magics):
+class FortranMagics(Magics, FortranConfig):
 
     allowed_fcompilers = sorted(fcompiler.fcompiler_class.keys())
     allowed_compilers = sorted(compiler_class.keys())
@@ -119,7 +126,9 @@ class FortranMagics(Magics):
         ))
 
     def __init__(self, shell):
-        super(FortranMagics, self).__init__(shell)
+        super(FortranMagics, self).__init__(shell=shell)
+        super(FortranConfig, self).__init__(config=shell.config)
+        self.shell.configurables.append(self)
         self._reloads = {}
         self._code_cache = {}
         self._lib_dir = os.path.join(get_ipython_cache_dir(), 'fortran')
