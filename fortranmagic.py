@@ -30,8 +30,6 @@ from IPython.core import display, magic_arguments
 from IPython.utils import py3compat
 from IPython.utils.io import capture_output
 from IPython.utils.path import get_ipython_cache_dir
-from IPython.config.configurable import Configurable
-from IPython.utils.traitlets import Int, Unicode
 from numpy.f2py import f2py2e
 from numpy.distutils import fcompiler
 from distutils.core import Distribution
@@ -42,36 +40,48 @@ __version__ = '0.2.1'
 fcompiler.load_all_fcompiler_classes()
 
 
-def compose(*decors):
+def compose(*decorators):
     """Helper to compose decorators::
 
         @a
         @b
-        @c
         def f():
             pass
 
-    Would be equivalent to::
+    Is equivalent to::
 
-        @compose(a, b, c)
+        @compose(a, b)
         def f():
             ...
     """
     def composed(f):
-        for decor in reversed(decors):
+        for decor in reversed(decorators):
             f = decor(f)
         return f
     return composed
 
 
-class FortranConfig(Configurable):
-    verbosity = Int(0, config=True)
-    fcompiler = Unicode('', config=True)
-    # .. other configurable arguments
+def smart_update(a, b):
+    """
+    return a concatenation of dictionaries ``a`` and ``b``
+    prefering values of b but extending lists
+
+    >>> a = {'name': 'Martin', 'things': [1]}
+    >>> b = {'name': 'Nati', 'things': [2]}
+    >>> smart_update(a, b)
+        {'name': 'Nati', 'cosas': [1, 2]}
+
+    """
+    r = a.copy()
+    r.update(b)
+    for (k, v) in a.items():
+        if isinstance(v, list) and isinstance(b.get(k, None), list):
+            r[k] = v + b[k]
+    return r
 
 
 @magics_class
-class FortranMagics(Magics, FortranConfig):
+class FortranMagics(Magics):
 
     allowed_fcompilers = sorted(fcompiler.fcompiler_class.keys())
     allowed_compilers = sorted(compiler_class.keys())
@@ -128,8 +138,6 @@ class FortranMagics(Magics, FortranConfig):
 
     def __init__(self, shell):
         super(FortranMagics, self).__init__(shell=shell)
-        super(FortranConfig, self).__init__(config=shell.config)
-        self.shell.configurables.append(self)
         self._reloads = {}
         self._code_cache = {}
         self._lib_dir = os.path.join(get_ipython_cache_dir(), 'fortran')
@@ -212,25 +220,43 @@ class FortranMagics(Magics, FortranConfig):
 
     @my_magic_arguments
     @magic_arguments.argument(
-            '--defaults', action="store_true", help="Delete custom configuration "
-            "and back to default"
-        )
+        '--defaults', action="store_true", help="Delete custom configuration "
+        "and back to default"
+    )
     @line_magic
     def fortran_config(self, line):
-        """override the default arguments and configuration for \\%%fortran
-        and store them persistently.
+        """
+        View and handle the custom configuration for %%fortran magic.
 
-        ``%fortran_config --defaults`` back to default configs"""
-        args = magic_arguments.parse_argstring(self.fortran_defaults, line)
+            %fortran_config
+
+                Show the current custom configuration
+
+            %fortran_config --defaults
+
+                Delete the current configuration and back to defaults
+
+            %fortran_config <other options>
+
+                Save <other options> to use with %%fortran
+        """
+
+        args = magic_arguments.parse_argstring(self.fortran_config, line)
         if args.defaults:
             try:
-                self.shell.db['fortran']
-                print("Deleted custom config. Back to default arguments for \\%%fortran")
+                del self.shell.db['fortran']
+                print("Deleted custom config. Back to default arguments for %%fortran")
             except KeyError:
-                print("No custom config found for \\%%fortran")
+                print("No custom config found for %%fortran")
+        elif not line:
+            try:
+                line = self.shell.db['fortran']
+            except KeyError:
+                print("No custom config found for %%fortran")
+            print("Current defaults arguments for %%fortran:\n\t%s" % line)
         else:
-            self.shell.db['fortran'] = args
-            print("New default arguments for \\%%fortran:\n\t%s" % args)
+            self.shell.db['fortran'] = line
+            print("New default arguments for %%fortran:\n\t%s" % line)
 
     @my_magic_arguments
     @cell_magic
@@ -256,24 +282,25 @@ class FortranMagics(Magics, FortranConfig):
 
         """
         try:
-            args = self.shell.db['fortran']
+            # custom saved arguments
+            args = vars(magic_arguments.parse_argstring(self.fortran,
+                                                        self.shell.db['fortran']))
         except KeyError:
             args = {}
 
-        # update db_args. WIP
-
-        args = magic_arguments.parse_argstring(self.fortran, line)
+        args = smart_update(args,
+                            vars(magic_arguments.parse_argstring(self.fortran, line)))
 
         # boolean flags
-        f2py_args = ['--%s' % k for k, v in vars(args).items() if v is True]
+        f2py_args = ['--%s' % k for k, v in args.items() if v is True]
 
-        kw = ['--%s=%s' % (k, v) for k, v in vars(args).items()
+        kw = ['--%s=%s' % (k, v) for k, v in args.items()
               if isinstance(v, basestring)]
         f2py_args.extend(kw)
 
-        # link resoucers
-        if args.link:
-            resources = ['--link-%s' % r for r in args.link]
+        # link resource
+        if args.get('link', None):
+            resources = ['--link-%s' % r for r in args['link']]
             f2py_args.extend(resources)
 
         code = cell if cell.endswith('\n') else cell+'\n'
@@ -291,11 +318,11 @@ class FortranMagics(Magics, FortranConfig):
             f.write(code)
 
         self._run_f2py(f2py_args + ['-m', module_name, '-c', f90_file],
-                       verbosity=args.verbosity)
+                       verbosity=args['verbosity'])
 
         self._code_cache[key] = module_name
         module = imp.load_dynamic(module_name, module_path)
-        self._import_all(module, verbosity=args.verbosity)
+        self._import_all(module, verbosity=args['verbosity'])
 
     @property
     def so_ext(self):
@@ -324,7 +351,9 @@ def load_ipython_extension(ip):
     ip.register_magics(FortranMagics)
 
     # enable fortran highlight
-    patch = ("IPython.config.cell_magic_highlight['magic_fortran'] = {'reg':[/^%%fortran/]};")
+    patch = ("IPython.config.cell_magic_highlight['magic_fortran'] = "
+             "{'reg':[/^%%fortran/]};")
     js = display.Javascript(data=patch,
-                            lib=["https://raw.github.com/marijnh/CodeMirror/master/mode/fortran/fortran.js"])
+                            lib=["https://raw.github.com/marijnh/CodeMirror/master/mode/"
+                                 "fortran/fortran.js"])
     display.display_javascript(js)
