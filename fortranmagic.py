@@ -61,25 +61,6 @@ def compose(*decorators):
     return composed
 
 
-def smart_update(a, b):
-    """
-    return a concatenation of dictionaries ``a`` and ``b``
-    prefering values of b but extending lists
-
-    >>> a = {'name': 'Martin', 'things': [1]}
-    >>> b = {'name': 'Nati', 'things': [2]}
-    >>> smart_update(a, b)
-        {'name': 'Nati', 'cosas': [1, 2]}
-
-    """
-    r = a.copy()
-    r.update(b)
-    for (k, v) in a.items():
-        if isinstance(v, list) and isinstance(b.get(k, None), list):
-            r[k] = v + b[k]
-    return r
-
-
 @magics_class
 class FortranMagics(Magics):
 
@@ -281,26 +262,32 @@ class FortranMagics(Magics):
 
 
         """
+
         try:
             # custom saved arguments
-            args = vars(magic_arguments.parse_argstring(self.fortran,
-                                                        self.shell.db['fortran']))
+            saved_defaults = vars(
+                magic_arguments.parse_argstring(self.fortran,
+                                                self.shell.db['fortran']))
+            self.fortran.parser.set_defaults(**saved_defaults)
         except KeyError:
-            args = {}
+            saved_defaults = {'verbosity': 0}
+        args = magic_arguments.parse_argstring(self.fortran, line)
 
-        args = smart_update(args,
-                            vars(magic_arguments.parse_argstring(self.fortran, line)))
+        # count arguments are added implicitly.
+        # so -vv in %fortran_config and -vvv in %%fortran means
+        # a nonsense verbosity=5. Fix that
+        args.verbosity -= saved_defaults['verbosity']
 
         # boolean flags
-        f2py_args = ['--%s' % k for k, v in args.items() if v is True]
+        f2py_args = ['--%s' % k for k, v in vars(args).items() if v is True]
 
-        kw = ['--%s=%s' % (k, v) for k, v in args.items()
+        kw = ['--%s=%s' % (k, v) for k, v in vars(args).items()
               if isinstance(v, basestring)]
         f2py_args.extend(kw)
 
         # link resource
-        if args.get('link', None):
-            resources = ['--link-%s' % r for r in args['link']]
+        if args.link:
+            resources = ['--link-%s' % r for r in args.link]
             f2py_args.extend(resources)
 
         code = cell if cell.endswith('\n') else cell+'\n'
@@ -318,11 +305,11 @@ class FortranMagics(Magics):
             f.write(code)
 
         self._run_f2py(f2py_args + ['-m', module_name, '-c', f90_file],
-                       verbosity=args['verbosity'])
+                       verbosity=args.verbosity)
 
         self._code_cache[key] = module_name
         module = imp.load_dynamic(module_name, module_path)
-        self._import_all(module, verbosity=args['verbosity'])
+        self._import_all(module, verbosity=args.verbosity)
 
     @property
     def so_ext(self):
