@@ -2,6 +2,13 @@
 Changelog
 =========
 
+0.3 / 2013-03-10
+------------------
+
+- Added ``%fortran_config`` to set and persist default arguments
+  for ``%%fortran``
+- Improve documentation
+
 0.2.1 / 2013-09-24
 ------------------
 
