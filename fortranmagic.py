@@ -40,14 +40,85 @@ __version__ = '0.2.1'
 fcompiler.load_all_fcompiler_classes()
 
 
+def compose(*decorators):
+    """Helper to compose decorators::
+
+        @a
+        @b
+        def f():
+            pass
+
+    Is equivalent to::
+
+        @compose(a, b)
+        def f():
+            ...
+    """
+    def composed(f):
+        for decor in reversed(decorators):
+            f = decor(f)
+        return f
+    return composed
+
+
 @magics_class
 class FortranMagics(Magics):
 
     allowed_fcompilers = sorted(fcompiler.fcompiler_class.keys())
     allowed_compilers = sorted(compiler_class.keys())
 
+    my_magic_arguments = compose(
+        magic_arguments.magic_arguments(),
+        magic_arguments.argument(
+            "-v", "--verbosity", action="count", default=0,
+            help="increase output verbosity"
+        ),
+        magic_arguments.argument(
+            '--fcompiler',
+            choices=allowed_fcompilers,
+            help="""Specify Fortran compiler type by vendor.
+                 See %%f2py_help --fcompiler""",
+        ),
+        magic_arguments.argument(
+            '--compiler',
+            choices=allowed_compilers,
+            help="""Specify C compiler type (as defined by distutils).
+                    See %%f2py_help --compiler"""
+        ),
+        magic_arguments.argument(
+            '--f90flags', help="Specify F90 compiler flags"
+        ),
+        magic_arguments.argument(
+            '--f77flags', help="Specify F77 compiler flags"
+        ),
+        magic_arguments.argument(
+            '--opt', help="Specify optimization flags"
+        ),
+        magic_arguments.argument(
+            '--arch', help="Specify architecture specific optimization flags"
+        ),
+        magic_arguments.argument(
+            '--noopt', action="store_true", help="Compile without optimization"
+        ),
+        magic_arguments.argument(
+            '--noarch', action="store_true", help="Compile without "
+            "arch-dependent optimization"
+        ),
+        magic_arguments.argument(
+            '--debug', action="store_true", help="Compile with debugging "
+            "information"
+        ),
+        magic_arguments.argument(
+            '--link', action='append', default=[],
+            help="""Link extension module with LINK resource, as defined
+                    by numpy.distutils/system_info.py. E.g. to link
+                    with optimized LAPACK libraries (vecLib on MacOSX,
+                    ATLAS elsewhere), use --link lapack_opt.
+                    See also %%f2py_help --resources switch."""
+        ))
+
     def __init__(self, shell):
-        super(FortranMagics, self).__init__(shell)
+        super(FortranMagics, self).__init__(shell=shell)
         self._reloads = {}
         self._code_cache = {}
         self._lib_dir = os.path.join(get_ipython_cache_dir(), 'fortran')
@@ -128,52 +199,47 @@ class FortranMagics(Magics):
         elif args.link:
             self._run_f2py(['--help-link', args.link], True)
 
-    @magic_arguments.magic_arguments()
+    @my_magic_arguments
     @magic_arguments.argument(
-        "-v", "--verbosity", action="count", default=0,
-        help="increase output verbosity"
+        '--defaults', action="store_true", help="Delete custom configuration "
+        "and back to default"
     )
-    @magic_arguments.argument(
-        '--fcompiler',
-        choices=allowed_fcompilers,
-        help="""Specify Fortran compiler type by vendor.
-                See %%f2py_help --fcompiler""",
-    )
-    @magic_arguments.argument(
-        '--compiler',
-        choices=allowed_compilers,
-        help="""Specify C compiler type (as defined by distutils).
-                See %%f2py_help --compiler"""
-    )
-    @magic_arguments.argument(
-        '--f90flags', help="Specify F90 compiler flags"
-    )
-    @magic_arguments.argument(
-        '--f77flags', help="Specify F77 compiler flags"
-    )
-    @magic_arguments.argument(
-        '--opt', help="Specify optimization flags"
-    )
-    @magic_arguments.argument(
-        '--arch', help="Specify architecture specific optimization flags"
-    )
-    @magic_arguments.argument(
-        '--noopt', action="store_true", help="Compile without optimization"
-    )
-    @magic_arguments.argument(
-        '--noarch', action="store_true", help="Compile without arch-dependent optimization"
-    )
-    @magic_arguments.argument(
-        '--debug', action="store_true", help="Compile with debugging information"
-    )
-    @magic_arguments.argument(
-        '--link', action='append', default=[],
-        help="""Link extension module with LINK resource, as defined
-                by numpy.distutils/system_info.py. E.g. to link
-                with optimized LAPACK libraries (vecLib on MacOSX,
-                ATLAS elsewhere), use --link lapack_opt.
-                See also %%f2py_help --resources switch."""
-    )
+    @line_magic
+    def fortran_config(self, line):
+        """
+        View and handle the custom configuration for %%fortran magic.
+
+            %fortran_config
+
+                Show the current custom configuration
+
+            %fortran_config --defaults
+
+                Delete the current configuration and back to defaults
+
+            %fortran_config <other options>
+
+                Save <other options> to use with %%fortran
+        """
+
+        args = magic_arguments.parse_argstring(self.fortran_config, line)
+        if args.defaults:
+            try:
+                del self.shell.db['fortran']
+                print("Deleted custom config. Back to default arguments for %%fortran")
+            except KeyError:
+                print("No custom config found for %%fortran")
+        elif not line:
+            try:
+                line = self.shell.db['fortran']
+            except KeyError:
+                print("No custom config found for %%fortran")
+            print("Current defaults arguments for %%fortran:\n\t%s" % line)
+        else:
+            self.shell.db['fortran'] = line
+            print("New default arguments for %%fortran:\n\t%s" % line)
+
+    @my_magic_arguments
     @cell_magic
     def fortran(self, line, cell):
         """Compile and import everything from a Fortran code cell, using f2py.
@@ -196,16 +262,35 @@ class FortranMagics(Magics):
 
 
         """
+
+        try:
+            # custom saved arguments
+            saved_defaults = vars(
+                magic_arguments.parse_argstring(self.fortran,
+                                                self.shell.db['fortran']))
+            self.fortran.parser.set_defaults(**saved_defaults)
+        except KeyError:
+            saved_defaults = {'verbosity': 0}
+
+        # verbosity is a "count" argument were each ocurrence is
+        # added implicit.
+        # so, for instance, -vv in %fortran_config and -vvv in %%fortran means
+        # a nonsense verbosity=5.
+        # To override: if verbosity is given for the magic cell
+        # we ignore the saved config.
+        if '-v' in line:
+            self.fortran.parser.set_defaults(verbosity=0)
+
         args = magic_arguments.parse_argstring(self.fortran, line)
 
         # boolean flags
         f2py_args = ['--%s' % k for k, v in vars(args).items() if v is True]
 
         kw = ['--%s=%s' % (k, v) for k, v in vars(args).items()
-                          if isinstance(v, basestring)]
+              if isinstance(v, basestring)]
         f2py_args.extend(kw)
 
-        # link resoucers
+        # link resource
         if args.link:
             resources = ['--link-%s' % r for r in args.link]
             f2py_args.extend(resources)
@@ -258,7 +343,9 @@ def load_ipython_extension(ip):
     ip.register_magics(FortranMagics)
 
     # enable fortran highlight
-    patch = ("IPython.config.cell_magic_highlight['magic_fortran'] = {'reg':[/^%%fortran/]};")
+    patch = ("IPython.config.cell_magic_highlight['magic_fortran'] = "
+             "{'reg':[/^%%fortran/]};")
     js = display.Javascript(data=patch,
-                            lib=["https://raw.github.com/marijnh/CodeMirror/master/mode/fortran/fortran.js"])
+                            lib=["https://raw.github.com/marijnh/CodeMirror/master/mode/"
+                                 "fortran/fortran.js"])
     display.display_javascript(js)
