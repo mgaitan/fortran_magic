@@ -315,7 +315,7 @@ class FortranMagics(Magics):
             f2py_args.extend(resources)
 
         code = cell if cell.endswith('\n') else cell+'\n'
-        key = code, sys.version_info, sys.executable, f2py2e.f2py_version
+        key = code, f2py_args, sys.version_info, sys.executable, f2py2e.f2py_version
 
         module_name = "_fortran_magic_" + \
                       hashlib.md5(str(key).encode('utf-8')).hexdigest()
