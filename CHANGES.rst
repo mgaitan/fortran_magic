@@ -2,6 +2,13 @@
 Changelog
 =========
 
+0.4 / 2013-07-10
+----------------
+
+- Implement the ``--extra`` option.
+- Include f2py args in the hashing, so the same cell are
+  recompiled if its arguments changes
+
 0.3 / 2013-03-10
 ------------------
 
