@@ -36,7 +36,7 @@ from distutils.core import Distribution
 from distutils.ccompiler import compiler_class
 from distutils.command.build_ext import build_ext
 
-__version__ = '0.4'
+__version__ = '0.4.1'
 fcompiler.load_all_fcompiler_classes()
 
 
@@ -315,7 +315,7 @@ class FortranMagics(Magics):
             f2py_args.extend(resources)
 
         code = cell if cell.endswith('\n') else cell+'\n'
-        key = code, f2py_args, sys.version_info, sys.executable, f2py2e.f2py_version
+        key = code, line, sys.version_info, sys.executable, f2py2e.f2py_version
 
         module_name = "_fortran_magic_" + \
                       hashlib.md5(str(key).encode('utf-8')).hexdigest()
