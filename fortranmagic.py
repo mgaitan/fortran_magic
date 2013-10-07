@@ -61,6 +61,14 @@ def compose(*decorators):
     return composed
 
 
+def unquote(v):
+    if ((v.startswith('"') and v.endswith('"')) or
+            (v.startswith("'") and v.endswith("'"))):
+        return v[1:-1]
+    else:
+        return v
+
+
 @magics_class
 class FortranMagics(Magics):
 
@@ -115,6 +123,14 @@ class FortranMagics(Magics):
                     with optimized LAPACK libraries (vecLib on MacOSX,
                     ATLAS elsewhere), use --link lapack_opt.
                     See also %%f2py_help --resources switch."""
+        ),
+        magic_arguments.argument(
+            '--extra', action='append', default=[],
+            help="""Use --extra to pass any other argument in the f2py call. For example
+                    --extra '-L/path/to/lib/ -l<libname>'
+                    --extra '-D<define> -U<name>'
+                    --extra '-DPREPEND_FORTRAN -DUPPERCASE_FORTRAN'
+                    etc. """
         ))
 
     def __init__(self, shell):
@@ -290,13 +306,16 @@ class FortranMagics(Magics):
               if isinstance(v, basestring)]
         f2py_args.extend(kw)
 
+        if args.extra:
+            f2py_args.append(' '.join(map(unquote, args.extra)))
+
         # link resource
         if args.link:
             resources = ['--link-%s' % r for r in args.link]
             f2py_args.extend(resources)
 
         code = cell if cell.endswith('\n') else cell+'\n'
-        key = code, sys.version_info, sys.executable, f2py2e.f2py_version
+        key = code, f2py_args, sys.version_info, sys.executable, f2py2e.f2py_version
 
         module_name = "_fortran_magic_" + \
                       hashlib.md5(str(key).encode('utf-8')).hexdigest()
