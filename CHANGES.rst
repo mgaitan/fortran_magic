@@ -2,14 +2,16 @@
 Changelog
 =========
 
-0.4.1 / 2013-07-10
-----------------
+0.4.2 / 2013-10-08
+------------------
 
-- Implement the ``--extra`` option.
+- Implement the ``--extra`` option (Thanks to `Denis Vasilyev`_ for the help)
 - Include ``%%fortran``'s args in the hashing, so the same cell are
-  recompiled if its arguments changes
+  recompiled with the same code but different arguments
 
-0.3 / 2013-03-10
+.. _Denis Vasilyev: https://github.com/Vutshi
+
+0.3 / 2013-10-03
 ------------------
 
 - Added ``%fortran_config`` to set and persist default arguments
