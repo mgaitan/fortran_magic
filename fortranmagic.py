@@ -36,7 +36,7 @@ from distutils.core import Distribution
 from distutils.ccompiler import compiler_class
 from distutils.command.build_ext import build_ext
 
-__version__ = '0.4.1'
+__version__ = '0.4.2dev'
 fcompiler.load_all_fcompiler_classes()
 
 
@@ -306,13 +306,15 @@ class FortranMagics(Magics):
               if isinstance(v, basestring)]
         f2py_args.extend(kw)
 
-        if args.extra:
-            f2py_args.append(' '.join(map(unquote, args.extra)))
-
         # link resource
         if args.link:
             resources = ['--link-%s' % r for r in args.link]
             f2py_args.extend(resources)
+
+        if args.extra:
+            extras = ' '.join(map(unquote, args.extra))
+            extras = extras.split()
+            f2py_args.extend(extras)
 
         code = cell if cell.endswith('\n') else cell+'\n'
         key = code, line, sys.version_info, sys.executable, f2py2e.f2py_version
