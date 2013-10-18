@@ -1,9 +1,17 @@
-
 =============
 Fortran magic
 =============
 
-Compile and import everything from a Fortran code cell, using f2py.
+.. image:: https://pypip.in/v/fortran-magic/badge.png
+   :target: https://pypi.python.org/pypi/fortran-magic
+   :alt: Latest PyPI version
+
+.. image:: https://pypip.in/d/fortran-magic/badge.png
+   :target: https://pypi.python.org/pypi/fortran-magic
+   :alt: Number of PyPI downloads
+ 
+
+Compile and import Fortran symbols from a code cell, using f2py.
 
 The contents of the cell are written to a `.f90` file in the
 directory `IPYTHONDIR/fortran` using a filename with the hash of the
