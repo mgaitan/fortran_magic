@@ -11,7 +11,7 @@ setup(
     description='An extension for IPython that help to use Fortran in '
                 'your interactive session.',
     long_description=long_description,
-    author=u'Martín Gaitán',
+    author='Martin Gaitan',
     author_email='gaitan@gmail.com',
     url='https://github.com/mgaitan/fortran_magic',
     license='BSD',

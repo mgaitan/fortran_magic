@@ -302,8 +302,15 @@ class FortranMagics(Magics):
         # boolean flags
         f2py_args = ['--%s' % k for k, v in vars(args).items() if v is True]
 
+        try:
+            base_str_class = basestring
+        except NameError:
+            # py3
+            base_str_class = str
+
         kw = ['--%s=%s' % (k, v) for k, v in vars(args).items()
-              if isinstance(v, basestring)]
+              if isinstance(v, base_str_class)]
+
         f2py_args.extend(kw)
 
         # link resource
@@ -316,7 +323,7 @@ class FortranMagics(Magics):
             extras = extras.split()
             f2py_args.extend(extras)
 
-        code = cell if cell.endswith('\n') else cell+'\n'
+        code = cell if cell.endswith('\n') else cell + '\n'
         key = code, line, sys.version_info, sys.executable, f2py2e.f2py_version
 
         module_name = "_fortran_magic_" + \
