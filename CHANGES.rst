@@ -2,6 +2,13 @@
 Changelog
 =========
 
+0.4.3 / 2013-12-09
+-------------------
+
+- Fix two python3.2+ incompatibilities (Thanks `Ramon Crehuet`_ for the report)
+
+.. _Ramon Crehuet: https://github.com/rcrehuet
+
 0.4.2 / 2013-10-08
 ------------------
 
