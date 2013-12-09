@@ -356,7 +356,7 @@ class FortranMagics(Magics):
             self._so_ext = build_extension.get_ext_filename('')
             return self._so_ext
 
-# __doc__ = __doc__.format(FORTRAN_DOC=' ' * 8 + FortranMagics.fortran.__doc__)
+__doc__ = __doc__.format(FORTRAN_DOC=' ' * 8 + FortranMagics.fortran.__doc__)
 
 
 def load_ipython_extension(ip):
