@@ -11,7 +11,7 @@ Fortran magic
    :alt: Number of PyPI downloads
  
 
-Compile and import Fortran symbols from a code cell, using f2py.
+Compile and import symbols from a cell with Fortran code, using f2py.
 
 The contents of the cell are written to a `.f90` file in the
 directory `IPYTHONDIR/fortran` using a filename with the hash of the
