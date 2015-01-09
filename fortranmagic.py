@@ -18,6 +18,7 @@ import imp
 import io
 import os
 import sys
+import subprocess
 
 try:
     import hashlib
@@ -167,7 +168,7 @@ class FortranMagics(Magics):
             os.chdir(self._lib_dir)
             try:
                 with capture_output() as captured:
-                    f2py2e.main()
+                    subprocess.call(sys.argv)
                 if show_captured or verbosity > 2:
                     captured()
             except SystemExit as e:
