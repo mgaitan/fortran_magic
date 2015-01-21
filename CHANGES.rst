@@ -2,6 +2,13 @@
 Changelog
 =========
 
+0.5 / 2015-01-21
+----------------
+
+- Call f2py via subprocess. It fixes problems finding fortran compilers under Windows. (Thanks to `David Powell`_ )
+
+.. _David Powell: https://github.com/DavidPowell
+
 0.4.3 / 2013-12-09
 -------------------
 
