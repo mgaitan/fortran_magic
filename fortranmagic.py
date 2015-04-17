@@ -18,7 +18,8 @@ import imp
 import io
 import os
 import sys
-import subprocess
+#import subprocess
+from subprocess import Popen, PIPE
 
 try:
     import hashlib
@@ -37,7 +38,7 @@ from distutils.core import Distribution
 from distutils.ccompiler import compiler_class
 from distutils.command.build_ext import build_ext
 
-__version__ = '0.5'
+__version__ = '0.5.1'
 fcompiler.load_all_fcompiler_classes()
 
 
@@ -168,8 +169,27 @@ class FortranMagics(Magics):
             os.chdir(self._lib_dir)
             try:
                 with capture_output() as captured:
-                    subprocess.call(sys.argv)
+                    #subprocess.call(sys.argv)
+                    # Refactor subprocess call to work with jupyterhub
+                    try:
+                      p = Popen(sys.argv, stdout=PIPE, stderr=PIPE, stdin=PIPE)
+                    except OSError as e:
+                      if e.errno == errno.ENOENT:
+                        print("Couldn't find program: %r" % sys.argv[0])
+                        return
+                      else:
+                        raise
+                    try:
+                      out, err = p.communicate(input=None)
+                    except:
+                      pass
+                    if err:
+                      sys.stderr.write(err)
+                      sys.stderr.flush()
                 if show_captured or verbosity > 2:
+                    if out:
+                      sys.stdout.write(out)
+                      sys.stdout.flush()
                     captured()
             except SystemExit as e:
                 captured()
