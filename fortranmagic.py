@@ -21,6 +21,8 @@ import sys
 #import subprocess
 from subprocess import Popen, PIPE
 
+import errno
+
 try:
     import hashlib
 except ImportError:
