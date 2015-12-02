@@ -39,11 +39,11 @@ You can install or upgrade via pip
 Basic usage
 ===========
 
-Once it's installed, you can load it with `%load_ext fortranmagic`. Then put your Fortran code in a cell started with the cell magic `%%fortran``.
-For example::
+Once it's installed, you can load it with ``%load_ext fortranmagic``.
+Then put your Fortran code in a cell started with the cell magic ``%%fortran``. For example::
+
 
     In[2]: %load_ext fortranmagic
-
 
     In[3]: %%fortran
 
