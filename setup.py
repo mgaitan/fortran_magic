@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 from setuptools import setup
-from fortranmagic import __version__
 
 long_description = (open('README.rst').read() + '\n\n' +
                     open('CHANGES.rst').read())
 
 setup(
     name='fortran-magic',
-    version=__version__,
+    version='0.6.1',
     description='An extension for IPython that help to use Fortran in '
                 'your interactive session.',
     long_description=long_description,
