@@ -200,6 +200,8 @@ class FortranMagics(Magics):
             sys.argv = old_argv
             os.chdir(old_cwd)
 
+        return p.returncode
+
     @magic_arguments.magic_arguments()
     @magic_arguments.argument(
         '--resources', action="store_true",
@@ -360,8 +362,10 @@ class FortranMagics(Magics):
         with io.open(f90_file, 'w', encoding='utf-8') as f:
             f.write(code)
 
-        self._run_f2py(f2py_args + ['-m', module_name, '-c', f90_file],
-                       verbosity=args.verbosity)
+        res = self._run_f2py(f2py_args + ['-m', module_name, '-c', f90_file],
+                             verbosity=args.verbosity)
+        if res != 0:
+           raise RuntimeError("f2py failed, see output")
 
         self._code_cache[key] = module_name
         module = imp.load_dynamic(module_name, module_path)
