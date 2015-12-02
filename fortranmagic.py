@@ -40,7 +40,7 @@ from distutils.core import Distribution
 from distutils.ccompiler import compiler_class
 from distutils.command.build_ext import build_ext
 
-__version__ = '0.5.1'
+__version__ = '0.6'
 fcompiler.load_all_fcompiler_classes()
 
 

@@ -2,6 +2,18 @@
 Changelog
 =========
 
+0.6 / 2015-12-02
+----------------
+
+- Decode text before printing
+- Call f2py module instead of binary (numpy >=1.10 is mandatory)
+- Check if f2py command failed
+
+Thanks to `Juan Luis Cano Rodríguez`_ for this contribution
+
+.. _Juan Luis Cano Rodriguez: https://github.com/Juanlu001
+
+
 0.5 / 2015-01-21
 ----------------
 
