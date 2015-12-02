@@ -164,7 +164,7 @@ class FortranMagics(Magics):
         old_argv = sys.argv
         old_cwd = os.getcwdu() if sys.version_info[0] == 2 else os.getcwd()
         try:
-            sys.argv = ['f2py'] + list(map(str, argv))
+            sys.argv = ['python', '-m', 'numpy.f2py'] + list(map(str, argv))
             if verbosity > 1:
                 print("Running...\n   %s" % ' '.join(sys.argv))
 
@@ -186,11 +186,11 @@ class FortranMagics(Magics):
                     except:
                       pass
                     if err:
-                      sys.stderr.write(err)
+                      sys.stderr.write(err.decode())
                       sys.stderr.flush()
                 if show_captured or verbosity > 2:
                     if out:
-                      sys.stdout.write(out)
+                      sys.stdout.write(out.decode())
                       sys.stdout.flush()
                     captured()
             except SystemExit as e:
@@ -199,6 +199,8 @@ class FortranMagics(Magics):
         finally:
             sys.argv = old_argv
             os.chdir(old_cwd)
+
+        return p.returncode
 
     @magic_arguments.magic_arguments()
     @magic_arguments.argument(
@@ -360,8 +362,10 @@ class FortranMagics(Magics):
         with io.open(f90_file, 'w', encoding='utf-8') as f:
             f.write(code)
 
-        self._run_f2py(f2py_args + ['-m', module_name, '-c', f90_file],
-                       verbosity=args.verbosity)
+        res = self._run_f2py(f2py_args + ['-m', module_name, '-c', f90_file],
+                             verbosity=args.verbosity)
+        if res != 0:
+           raise RuntimeError("f2py failed, see output")
 
         self._code_cache[key] = module_name
         module = imp.load_dynamic(module_name, module_path)
