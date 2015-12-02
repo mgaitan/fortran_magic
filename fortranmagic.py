@@ -164,7 +164,7 @@ class FortranMagics(Magics):
         old_argv = sys.argv
         old_cwd = os.getcwdu() if sys.version_info[0] == 2 else os.getcwd()
         try:
-            sys.argv = ['f2py'] + list(map(str, argv))
+            sys.argv = ['python', '-m', 'numpy.f2py'] + list(map(str, argv))
             if verbosity > 1:
                 print("Running...\n   %s" % ' '.join(sys.argv))
 

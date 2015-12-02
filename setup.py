@@ -17,7 +17,7 @@ setup(
     license='BSD',
     keywords="ipython notebook fortran f2py science",
     py_modules=['fortranmagic'],
-    install_requires=['ipython', 'numpy'],
+    install_requires=['ipython', 'numpy>=1.10'],
     classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: Web Environment',
