@@ -186,11 +186,11 @@ class FortranMagics(Magics):
                     except:
                       pass
                     if err:
-                      sys.stderr.write(err)
+                      sys.stderr.write(err.decode())
                       sys.stderr.flush()
                 if show_captured or verbosity > 2:
                     if out:
-                      sys.stdout.write(out)
+                      sys.stdout.write(out.decode())
                       sys.stdout.flush()
                     captured()
             except SystemExit as e:
