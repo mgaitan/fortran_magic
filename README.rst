@@ -9,7 +9,7 @@ Fortran magic
 .. image:: https://pypip.in/d/fortran-magic/badge.png
    :target: https://pypi.python.org/pypi/fortran-magic
    :alt: Number of PyPI downloads
- 
+
 
 Compile and import symbols from a cell with Fortran code, using f2py.
 
@@ -35,10 +35,6 @@ You can install or upgrade via pip
 
     pip install -U fortran-magic
 
-or directly from the repository using the `%install_ext` magic command::
-
-    In[1]: %install_ext https://raw.github.com/mgaitan/fortran_magic/master/fortranmagic.py
-
 
 Basic usage
 ===========
@@ -60,10 +56,10 @@ For example::
            end subroutine f1
 
 
-Every symbol is automatically imported. So `f1` is already available::
+Every symbol is automatically imported. So the subroutine `f1` is already available in your python session as a function::
 
     In[4]:  f1(1.0, 2.1415)
     Out[4]: 9.26574066397734e-05
 
 
-See the documentation_ for details.
+See the documentation_ for further details.
