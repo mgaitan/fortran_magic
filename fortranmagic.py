@@ -168,9 +168,12 @@ class FortranMagics(Magics):
         old_cwd = os.getcwdu() if sys.version_info[0] == 2 else os.getcwd()
         try:
             if np.__version__ < LooseVersion('1.10.0'):
-                sys.argv = ['f2py']
+                if sys.version_info[0] >= 3:
+                    sys.argv = ['f2py3']
+                else:
+                    sys.argv = ['f2py']
             else:
-                sys.argv = ['python', '-m', 'numpy.f2py']
+                sys.argv = [sys.executable, '-m', 'numpy.f2py']
             sys.argv += map(str, argv)
 
             if verbosity > 1:
