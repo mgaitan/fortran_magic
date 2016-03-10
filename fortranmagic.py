@@ -34,11 +34,14 @@ from IPython.core import display, magic_arguments
 from IPython.utils import py3compat
 from IPython.utils.io import capture_output
 from IPython.utils.path import get_ipython_cache_dir
+import numpy as np
 from numpy.f2py import f2py2e
 from numpy.distutils import fcompiler
 from distutils.core import Distribution
 from distutils.ccompiler import compiler_class
 from distutils.command.build_ext import build_ext
+from distutils.version import LooseVersion
+
 
 __version__ = '0.6.1'
 fcompiler.load_all_fcompiler_classes()
@@ -164,7 +167,12 @@ class FortranMagics(Magics):
         old_argv = sys.argv
         old_cwd = os.getcwdu() if sys.version_info[0] == 2 else os.getcwd()
         try:
-            sys.argv = ['python', '-m', 'numpy.f2py'] + list(map(str, argv))
+            if np.__version__ < LooseVersion('1.10.0'):
+                sys.argv = ['f2py']
+            else:
+                sys.argv = ['python', '-m', 'numpy.f2py']
+            sys.argv += map(str, argv)
+
             if verbosity > 1:
                 print("Running...\n   %s" % ' '.join(sys.argv))
 
