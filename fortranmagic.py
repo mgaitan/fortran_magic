@@ -160,56 +160,44 @@ class FortranMagics(Magics):
 
     def _run_f2py(self, argv, show_captured=False, verbosity=0):
         """
-        Here we directly call the numpy.f2py.f2py2e.run_compile() entry point,
-        after some small amount of setup to get sys.argv and the current
-        working directory set appropriately.
+        Here we directly call the numpy.f2py module or the f2py executable.
         """
-        old_argv = sys.argv
-        old_cwd = os.getcwdu() if sys.version_info[0] == 2 else os.getcwd()
-        try:
-            if np.__version__ < LooseVersion('1.10.0'):
-                if sys.version_info[0] >= 3:
-                    sys.argv = ['f2py3']
-                else:
-                    sys.argv = ['f2py']
+        if np.__version__ < LooseVersion('1.10.0'):
+            if sys.version_info[0] >= 3:
+                command = ['f2py3']
             else:
-                sys.argv = [sys.executable, '-m', 'numpy.f2py']
-            sys.argv += map(str, argv)
+                command = ['f2py']
+        else:
+            command = [sys.executable, '-m', 'numpy.f2py']
+        command += map(str, argv)
 
-            if verbosity > 1:
-                print("Running...\n   %s" % ' '.join(sys.argv))
+        if verbosity > 1:
+            print("Running...\n   %s" % ' '.join(command))
 
-            os.chdir(self._lib_dir)
+        with capture_output() as captured:
+            # subprocess.call(command)
+            # Refactor subprocess call to work with jupyterhub
             try:
-                with capture_output() as captured:
-                    #subprocess.call(sys.argv)
-                    # Refactor subprocess call to work with jupyterhub
-                    try:
-                      p = Popen(sys.argv, stdout=PIPE, stderr=PIPE, stdin=PIPE)
-                    except OSError as e:
-                      if e.errno == errno.ENOENT:
-                        print("Couldn't find program: %r" % sys.argv[0])
-                        return
-                      else:
-                        raise
-                    try:
-                      out, err = p.communicate(input=None)
-                    except:
-                      pass
-                    if err:
-                      sys.stderr.write(err.decode())
-                      sys.stderr.flush()
-                if show_captured or verbosity > 2:
-                    if out:
-                      sys.stdout.write(out.decode())
-                      sys.stdout.flush()
-                    captured()
-            except SystemExit as e:
-                captured()
-                raise UsageError(str(e))
-        finally:
-            sys.argv = old_argv
-            os.chdir(old_cwd)
+                p = Popen(command, stdout=PIPE, stderr=PIPE, stdin=PIPE,
+                          cwd=self._lib_dir)
+            except OSError as e:
+                if e.errno == errno.ENOENT:
+                    print("Couldn't find program: %r" % command[0])
+                    return
+                else:
+                    raise
+            try:
+                out, err = p.communicate(input=None)
+            except:
+                pass
+            if err:
+                sys.stderr.write(err.decode())
+                sys.stderr.flush()
+        if show_captured or verbosity > 2:
+            if out:
+                sys.stdout.write(out.decode())
+                sys.stdout.flush()
+            captured()
 
         return p.returncode
 
