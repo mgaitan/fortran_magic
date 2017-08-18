@@ -33,7 +33,7 @@ from IPython.core.magic import Magics, magics_class, line_magic, cell_magic
 from IPython.core import display, magic_arguments
 from IPython.utils import py3compat
 from IPython.utils.io import capture_output
-from IPython.utils.path import get_ipython_cache_dir
+from IPython.paths import get_ipython_cache_dir
 import numpy as np
 from numpy.f2py import f2py2e
 from numpy.distutils import fcompiler
