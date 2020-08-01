@@ -43,7 +43,7 @@ from distutils.command.build_ext import build_ext
 from distutils.version import LooseVersion
 
 
-__version__ = '0.6.1'
+__version__ = '0.7'
 fcompiler.load_all_fcompiler_classes()
 
 
@@ -148,10 +148,11 @@ class FortranMagics(Magics):
         if not os.path.exists(self._lib_dir):
             os.makedirs(self._lib_dir)
 
-    def _import_all(self, module, verbosity=0):
+    def _import_all(self, module, verbosity=0, code=''):
         imported = []
         for k, v in module.__dict__.items():
             if not k.startswith('__'):
+                v.__source__ = code
                 self.shell.push({k: v})
                 imported.append(k)
         if verbosity > 0 and imported:
@@ -368,7 +369,7 @@ class FortranMagics(Magics):
 
         self._code_cache[key] = module_name
         module = imp.load_dynamic(module_name, module_path)
-        self._import_all(module, verbosity=args.verbosity)
+        self._import_all(module, verbosity=args.verbosity, code=code)
 
     @property
     def so_ext(self):
