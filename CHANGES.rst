@@ -10,7 +10,7 @@ Changelog
 - Patch fortran source in compiled object. (029d890, 2020-08-01, https://github.com/mgaitan)
 
 - Fix deprecation warning (3667bc1, 2017-08-18, https://github.com/guihigashi)
-  [IPython.utils.path removed from 8.x] 
+  [IPython.utils.path removed from IPython 8.x] 
 
 - Simplify f2py execution. (d8a058f, 2016-06-04, https://github.com/QuLogic)
   Don't change directories, and don't mangle `sys.argv`. The former can be
