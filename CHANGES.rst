@@ -2,6 +2,32 @@
 Changelog
 =========
 
+0.7.1 / TBD
+-----------
+
+- Synchronize version number in fortranmagic.py & setup.py (TBD, TBD, https://github.com/Serge3leo)
+
+- Patch fortran source in compiled object. (029d890, 2020-08-01, https://github.com/mgaitan)
+
+- Fix deprecation warning (3667bc1, 2017-08-18, https://github.com/guihigashi)
+  [IPython.utils.path removed from 8.x] 
+
+- Simplify f2py execution. (d8a058f, 2016-06-04, https://github.com/QuLogic)
+  Don't change directories, and don't mangle `sys.argv`. The former can be
+  specified directly in the `Popen` constructor, and the latter is cruft
+  from when the f2py module was imported directly.
+
+
+0.7 / 2016-03-13 [PyPI Changelog record and setup.py version number]
+----------------
+
+- Fix cross compatibility with older NumPy and Python 3. (15ab10c)
+
+Thanks to `Elliott Sales de Andrade`_ for this contribution
+
+.. _Elliott Sales de Andrade: https://github.com/QuLogic
+
+
 0.6 / 2015-12-02
 ----------------
 
