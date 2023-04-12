@@ -13,14 +13,20 @@ Fortran magic
 
 Compile and import symbols from a cell with Fortran code, using f2py.
 
+------
+
+..  attention::
+    I am looking for collaborators to maintain this project. If you are interested, 
+    please open an issue (or PRs) with your proposals for improvements and volunteer to be a maintainer. 
+
+------
+
 The contents of the cell are written to a `.f90` file in the
 directory `IPYTHONDIR/fortran` using a filename with the hash of the
 code. This file is then compiled. The resulting module
 is imported and all of its symbols are injected into the user's
 namespace.
 
-
-:author: Martín Gaitán <gaitan@gmail.com>
 :homepage: https://github.com/mgaitan/fortran_magic
 :documentation: see `this notebook`__
 
