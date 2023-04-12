@@ -2,8 +2,8 @@
 Changelog
 =========
 
-0.7.1 / TBD
------------
+0.7.1 / 2022-04-12
+------------------
 
 - Synchronize version number in fortranmagic.py & setup.py (TBD, TBD, https://github.com/Serge3leo)
 
@@ -18,7 +18,7 @@ Changelog
   from when the f2py module was imported directly.
 
 
-0.7 / 2016-03-13 [PyPI Changelog record and setup.py version number]
+0.7 / 2016-03-13 
 ----------------
 
 - Fix cross compatibility with older NumPy and Python 3. (15ab10c)
@@ -37,7 +37,7 @@ Thanks to `Elliott Sales de Andrade`_ for this contribution
 
 Thanks to `Juan Luis Cano Rodríguez`_ for this contribution
 
-.. _Juan Luis Cano Rodriguez: https://github.com/Juanlu001
+.. _Juan Luis Cano Rodríguez: https://github.com/Juanlu001
 
 
 0.5 / 2015-01-21
