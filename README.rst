@@ -2,14 +2,14 @@
 Fortran magic
 =============
 
-.. image:: https://pypip.in/v/fortran-magic/badge.png
+.. image:: https://img.shields.io/pypi/v/fortran-magic
    :target: https://pypi.python.org/pypi/fortran-magic
-   :alt: Latest PyPI version
-
-.. image:: https://pypip.in/d/fortran-magic/badge.png
+   :alt: PyPI
+   
+.. image:: https://img.shields.io/pypi/dm/fortran-magic
    :target: https://pypi.python.org/pypi/fortran-magic
-   :alt: Number of PyPI downloads
-
+   :alt: PyPI - Downloads
+   
 
 Compile and import symbols from a cell with Fortran code, using f2py.
 
