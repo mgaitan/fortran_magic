@@ -18,7 +18,6 @@ import imp
 import io
 import os
 import sys
-#import subprocess
 from subprocess import Popen, PIPE
 
 import errno
@@ -28,7 +27,6 @@ try:
 except ImportError:
     import md5 as hashlib
 
-from IPython.core.error import UsageError
 from IPython.core.magic import Magics, magics_class, line_magic, cell_magic
 from IPython.core import display, magic_arguments
 from IPython.utils import py3compat
@@ -185,12 +183,8 @@ class FortranMagics(Magics):
                 if e.errno == errno.ENOENT:
                     print("Couldn't find program: %r" % command[0])
                     return
-                else:
-                    raise
-            try:
-                out, err = p.communicate(input=None)
-            except:
-                pass
+                raise
+            out, err = p.communicate(input=None)
             if err:
                 sys.stderr.write(err.decode())
                 sys.stderr.flush()
@@ -365,7 +359,7 @@ class FortranMagics(Magics):
         res = self._run_f2py(f2py_args + ['-m', module_name, '-c', f90_file],
                              verbosity=args.verbosity)
         if res != 0:
-           raise RuntimeError("f2py failed, see output")
+            raise RuntimeError("f2py failed, see output")
 
         self._code_cache[key] = module_name
         module = imp.load_dynamic(module_name, module_path)
@@ -389,6 +383,7 @@ class FortranMagics(Magics):
             build_extension.finalize_options()
             self._so_ext = build_extension.get_ext_filename('')
             return self._so_ext
+
 
 __doc__ = __doc__.format(FORTRAN_DOC=' ' * 8 + FortranMagics.fortran.__doc__)
 
