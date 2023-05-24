@@ -173,26 +173,29 @@ class FortranMagics(Magics):
         if verbosity > 1:
             print("Running...\n   %s" % ' '.join(command))
 
-        with capture_output() as captured:
-            # subprocess.call(command)
-            # Refactor subprocess call to work with jupyterhub
-            try:
-                p = Popen(command, stdout=PIPE, stderr=PIPE, stdin=PIPE,
-                          cwd=self._lib_dir)
-            except OSError as e:
-                if e.errno == errno.ENOENT:
-                    print("Couldn't find program: %r" % command[0])
-                    return
-                raise
-            out, err = p.communicate(input=None)
-            if err:
-                sys.stderr.write(err.decode())
-                sys.stderr.flush()
-        if show_captured or verbosity > 2:
-            if out:
-                sys.stdout.write(out.decode())
-                sys.stdout.flush()
-            captured()
+        p, out, err = None, None, None
+        try:
+            with capture_output() as captured:
+                # subprocess.call(command)
+                # Refactor subprocess call to work with jupyterhub
+                try:
+                    p = Popen(command, stdout=PIPE, stderr=PIPE, stdin=PIPE,
+                              cwd=self._lib_dir)
+                except OSError as e:
+                    if e.errno == errno.ENOENT:
+                        print("Couldn't find program: %r" % command[0])
+                        return -1
+                    raise
+                out, err = p.communicate(input=None)
+        finally:
+            if show_captured or verbosity > 2 or p is None or p.returncode:
+                if err:
+                    sys.stderr.write(err.decode())
+                    sys.stderr.flush()
+                if out:
+                    sys.stdout.write(out.decode())
+                    sys.stdout.flush()
+                captured()
 
         return p.returncode
 
