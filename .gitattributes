@@ -1,0 +1,7 @@
+*        text=auto
+*.py     text
+*.f      text
+*.ini    text
+*.rst    text
+*.ipynb  text eol=lf
+*.yml    text eol=lf

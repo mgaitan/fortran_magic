@@ -1,5 +1,11 @@
 *.py[cod]
 
+# jupyter lab/jupyter notebook
+.ipynb_checkpoints/
+
+# vim
+*.swp
+
 # C extensions
 *.so
 

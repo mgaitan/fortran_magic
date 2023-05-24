@@ -6,7 +6,7 @@ long_description = (open('README.rst').read() + '\n\n' +
 
 setup(
     name='fortran-magic',
-    version='0.7.1',
+    version='0.7.2',
     description='An extension for IPython that help to use Fortran in '
                 'your interactive session.',
     long_description=long_description,
@@ -17,7 +17,7 @@ setup(
     license='BSD',
     keywords="ipython notebook fortran f2py science",
     py_modules=['fortranmagic'],
-    install_requires=['ipython', 'numpy'],
+    install_requires=['ipython', 'numpy', 'charset-normalizer'],
     classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: Web Environment',
