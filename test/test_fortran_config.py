@@ -156,14 +156,15 @@ MAXLOG = 10**9
             "-v", "", [1, 2], [0, 0],
             marks=pytest.mark.xfail if sys.platform.startswith("win32")
             else []),
-        # TODO: Bug at fortranmagic.py:309, exponential growth of
-        # self.fortran.parser.set_defaults(...)
         pytest.param(
             None, "", [1, 2], [0, 0],
-            marks=pytest.mark.xfail),
+            marks=pytest.mark.xfail if sys.platform.startswith("win32")
+            else []),
         pytest.param(
             None, "", [1, 2], [0, 0],
-            marks=[pytest.mark.xfail, pytest.mark.paranoid]),
+            marks=[pytest.mark.paranoid] +
+            [pytest.mark.xfail] if sys.platform.startswith("win32")
+            else []),
         ])
 def test_v(ctxish, f_config_arg, fortran_arg, outrange, errrange):
     """
@@ -206,12 +207,12 @@ def test_fcompiler_priority(ctxish):
 
 @pytest.mark.fast
 @pytest.mark.usefixtures("use_fortran_config")
-def test_syntax_error(ctxish):
+def test_syntax_error(ctxish, numpy_correct_compilers):
     """Check `stderr` output by fortran syntax error."""
 
-    # ctxish.f_config("")
-    # TODO: Bug at fortranmagic.py:309, exponential... need --fcompiler=gnu95
-    ctxish.f_config("--fcompiler=gnu95")
+    f_config = " ".join(numpy_correct_compilers) if numpy_correct_compilers \
+               else "--defaults"
+    ctxish.f_config(f_config)
     r, o, e = ctxish.uck_run(FORTRAN + "\n" + BUG_PRG)
     assert not r.success, str(r)
     assert o.count('\n') >= 6, o
@@ -230,12 +231,8 @@ else:
     "f_config_arg, fortran_arg", [
         ('--extra "-DNPY_NO_DEPRECATED_API=0" --link lapack',
          '--extra "-DNPY_NO_DEPRECATED_API=0" --link blas'),
-        # TODO: Bug at fortranmagic.py:309, exponential growth of
-        # self.fortran.parser.set_defaults(...)
-        pytest.param(
-            None,
-            "--extra '-DNPY_NO_DEPRECATED_API=0' --link blas",
-            marks=pytest.mark.xfail),
+        (None,
+         "--extra '-DNPY_NO_DEPRECATED_API=0' --link blas"),
         ])
 def test_link_extra(ctxish, f_config_arg, fortran_arg):
     """

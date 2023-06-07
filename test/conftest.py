@@ -54,10 +54,8 @@ def use_fortran_config():
     Use: @pytest.mark.usefixtures("use_fortran_config")
     """
 
-    if _NUMPY_CORRECT_COMPILERS:
-        f_config = " ".join(_NUMPY_CORRECT_COMPILERS)
-    else:
-        f_config = "--defaults"
+    f_config = " ".join(_NUMPY_CORRECT_COMPILERS) if _NUMPY_CORRECT_COMPILERS \
+               else "--defaults"
     ish = ici.InteractiveShell()
     ish.run_cell("%load_ext fortranmagic")
     ish.run_cell("%fortran_config " + f_config)

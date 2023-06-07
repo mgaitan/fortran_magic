@@ -316,25 +316,20 @@ class FortranMagics(Magics):
 
         """
 
-        try:
-            # custom saved arguments
-            saved_defaults = vars(
-                magic_arguments.parse_argstring(self.fortran,
-                                                self.shell.db['fortran']))
-            self.fortran.parser.set_defaults(**saved_defaults)
-        except KeyError:
-            saved_defaults = {'verbosity': 0}
-
         # verbosity is a "count" argument were each ocurrence is
         # added implicit.
         # so, for instance, -vv in %fortran_config and -vvv in %%fortran means
         # a nonsense verbosity=5.
         # To override: if verbosity is given for the magic cell
         # we ignore the saved config.
-        if '-v' in line:
-            self.fortran.parser.set_defaults(verbosity=0)
-
         args = magic_arguments.parse_argstring(self.fortran, line)
+        f_config = self.shell.db.get('fortran', "")
+        if f_config:
+            sverbosity = args.verbosity
+            args = magic_arguments.parse_argstring(self.fortran,
+                                                   f_config + " " + line)
+            if sverbosity > 0:
+                args.verbosity = sverbosity
 
         # boolean flags
         f2py_args = ['--%s' % k for k, v in vars(args).items() if v is True]
