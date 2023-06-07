@@ -14,7 +14,6 @@ Author:
 
 from __future__ import print_function
 
-import imp
 import io
 import os
 import sys
@@ -43,6 +42,22 @@ from distutils.version import LooseVersion
 
 __version__ = '0.7.2'
 fcompiler.load_all_fcompiler_classes()
+
+
+try:
+    import importlib.machinery
+    import importlib.util
+
+    def _imp_load_dynamic(name, path):
+        loader = importlib.machinery.ExtensionFileLoader(name, path)
+        spec = importlib.machinery.ModuleSpec(name=name, loader=loader,
+                                              origin=path)
+        return importlib.util.module_from_spec(spec)
+except ImportError:
+    import imp
+
+    def _imp_load_dynamic(name, path):
+        return imp.load_dynamic(name, path)
 
 
 def compose(*decorators):
@@ -365,7 +380,7 @@ class FortranMagics(Magics):
             raise RuntimeError("f2py failed, see output")
 
         self._code_cache[key] = module_name
-        module = imp.load_dynamic(module_name, module_path)
+        module = _imp_load_dynamic(module_name, module_path)
         self._import_all(module, verbosity=args.verbosity, code=code)
 
     @property
