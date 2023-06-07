@@ -10,7 +10,6 @@ import IPython.core.interactiveshell as ici
 import pytest
 
 
-@pytest.mark.xfail
 @pytest.mark.usefixtures("use_fortran_config")
 def test_load_ext():
     """Check load/reload fortran extension"""

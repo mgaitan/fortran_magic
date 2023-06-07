@@ -14,31 +14,30 @@ Author:
 
 from __future__ import print_function
 
+import errno
 import io
 import os
 import sys
-from subprocess import Popen, PIPE
-
-import errno
+from subprocess import PIPE, Popen
 
 try:                       # TODO remove
     import hashlib
 except ImportError:
     import md5 as hashlib  # XXX need for python <2.5
 
-from IPython.core.magic import Magics, magics_class, line_magic, cell_magic
-from IPython.core import display, magic_arguments
-from IPython.utils import py3compat
-from IPython.utils.io import capture_output
-from IPython.paths import get_ipython_cache_dir
-import numpy as np
-from numpy.f2py import f2py2e
-from numpy.distutils import fcompiler
-from distutils.core import Distribution
 from distutils.ccompiler import compiler_class
 from distutils.command.build_ext import build_ext
+from distutils.core import Distribution
 from distutils.version import LooseVersion
 
+import numpy as np
+from IPython.core import display, magic_arguments
+from IPython.core.magic import Magics, cell_magic, line_magic, magics_class
+from IPython.paths import get_ipython_cache_dir
+from IPython.utils import py3compat
+from IPython.utils.io import capture_output
+from numpy.distutils import fcompiler
+from numpy.f2py import f2py2e
 
 __version__ = '0.7.2'
 fcompiler.load_all_fcompiler_classes()
@@ -85,8 +84,7 @@ def unquote(v):
     if ((v.startswith('"') and v.endswith('"')) or
             (v.startswith("'") and v.endswith("'"))):
         return v[1:-1]
-    else:
-        return v
+    return v
 
 
 @magics_class
@@ -298,10 +296,10 @@ class FortranMagics(Magics):
         """Compile and import everything from a Fortran code cell, using f2py.
 
         The content of the cell is written to a `.f90` file in the
-        directory `IPYTHONDIR/fortran` using a filename with the hash of the
-        code. This file is then compiled. The resulting module
-        is imported and all of its symbols are injected into the user's
-        namespace.
+        directory `IPYTHONDIR/fortran` using a filename with the hash of
+        the code, flags and configuration data. This file is then
+        compiled. The resulting module is imported and all of its
+        symbols are injected into the user's namespace.
 
 
         Usage
@@ -356,7 +354,8 @@ class FortranMagics(Magics):
             f2py_args.extend(extras)
 
         code = cell if cell.endswith('\n') else cell + '\n'
-        key = code, line, sys.version_info, sys.executable, f2py2e.f2py_version
+        key = (code, line, f_config,
+               sys.version_info, sys.executable, f2py2e.f2py_version)
 
         module_name = "_fortran_magic_" + \
                       hashlib.md5(str(key).encode('utf-8')).hexdigest()

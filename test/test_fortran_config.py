@@ -126,14 +126,8 @@ MAXLOG = 10**9
         (None, "-v", [1, 2], [0, 0]),
         (None, "-vv", [4, 5], [0, 0]),
         (None, "-vvv", [6, MAXLOG], [0, MAXLOG]),
-        pytest.param(
-            "-v -v", "", [4, 5], [0, 0],
-            marks=pytest.mark.xfail if sys.platform.startswith("win32")
-            else []),
-        pytest.param(
-            None, "-v", [1, 2], [0, 0],
-            marks=pytest.mark.xfail if sys.platform.startswith("win32")
-            else []),
+        ("-v -v", "", [4, 5], [0, 0]),
+        (None, "-v", [1, 2], [0, 0]),
         pytest.param(
             None, "-vv", [4, 5], [0, 0],
             marks=pytest.mark.paranoid),
@@ -152,10 +146,7 @@ MAXLOG = 10**9
         pytest.param(
             None, "-vvv", [6, MAXLOG], [0, MAXLOG],
             marks=pytest.mark.paranoid),
-        pytest.param(
-            "-v", "", [1, 2], [0, 0],
-            marks=pytest.mark.xfail if sys.platform.startswith("win32")
-            else []),
+        ("-v", "", [1, 2], [0, 0]),
         pytest.param(
             None, "", [1, 2], [0, 0],
             marks=pytest.mark.xfail if sys.platform.startswith("win32")
@@ -219,20 +210,16 @@ def test_syntax_error(ctxish, numpy_correct_compilers):
     assert e.count('\n') >= 1, e
 
 
-if sys.platform.startswith("win32"):
-    pytest.mark.xfail_win32 = pytest.mark.xfail
-else:
-    pytest.mark.xfail_win32 = pytest.mark.fast
-
-
-@pytest.mark.xfail_win32
 @pytest.mark.usefixtures("use_fortran_config")
 @pytest.mark.parametrize(
     "f_config_arg, fortran_arg", [
-        ('--extra "-DNPY_NO_DEPRECATED_API=0" --link lapack',
-         '--extra "-DNPY_NO_DEPRECATED_API=0" --link blas'),
-        (None,
+        ("--extra '-DNPY_NO_DEPRECATED_API=0' --link lapack",
          "--extra '-DNPY_NO_DEPRECATED_API=0' --link blas"),
+        pytest.param(
+         None,
+         "--extra '-DNPY_NO_DEPRECATED_API=0' --link blas",
+         marks=pytest.mark.xfail if sys.platform.startswith("win32")
+         else []),
         ])
 def test_link_extra(ctxish, f_config_arg, fortran_arg):
     """
