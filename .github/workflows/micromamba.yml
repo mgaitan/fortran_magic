@@ -1,0 +1,113 @@
+---
+# vim:set sw=2 ts=8 et fileencoding=utf8:
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright © 2023, Serguei E. Leontiev (leo@sai.msu.ru)
+#
+name: micromamba/jupyter application
+
+on:  # yamllint disable-line rule:truthy
+  push:
+    branches: ['*']
+
+  pull_request:
+    branches: ['*']
+
+jobs:
+  build:
+
+    strategy:
+      fail-fast: true
+      matrix:
+        os: ["macos", "ubuntu", "windows"]
+        python-version: ["3", "2"]
+        include:
+          - os: "macos"
+            platform: "darwin"
+            os_pkgs: "fortran-compiler"
+
+          - os: ubuntu
+            platform: "linux"
+            os_pkgs:
+
+          - os: "windows"
+            platform: "win32"
+            os_pkgs: "m2w64-gcc-fortran"
+
+          - python-version: "2"
+            py_spec: "python=2"
+            py_pkgs: "typing"
+
+          - python-version: "3"
+            py_spec: "python=3"
+            py_pkgs: "charset-normalizer"
+
+    name: ${{ matrix.platform }} ${{ matrix.py_spec }}
+    runs-on: ${{ matrix.os }}-latest
+    defaults:
+      run:
+        shell: bash -el {0}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +%Y-%m-%d)" >> "${GITHUB_OUTPUT}"
+
+      - uses: mamba-org/setup-micromamba@v1
+        env:
+          CACHE_NUMBER: 1  # increase to reset cache manually
+        with:
+          init-shell: bash
+          environment-name: test-env
+          environment-file: test/base-environment.yml
+          create-args:
+            ${{ matrix.py_spec }} ${{ matrix.py_pkgs }} ${{ matrix.os_pkgs }}
+          cache-environment-key:
+            environment-${{ steps.date.outputs.date }}-${{ env.CACHE_NUMBER }}
+          cache-downloads-key:
+            downloads-${{ steps.date.outputs.date }}-${{ env.CACHE_NUMBER }}
+
+      - name: Lint with flake8 & ymllint
+        run: |
+          yamllint .
+          flake8 . --count --max-line-length=127 --statistics
+
+      - name: Correct environment variable conda for f2py
+        if: ${{ matrix.platform == 'darwin' && matrix.py_spec == 'python=2' }}
+        run: echo LDFLAGS="-shared $(python-config --ldflags)" >> $GITHUB_ENV
+
+      - name: Precheck f2py
+        run: |
+          python --version
+          python -c "import numpy; print(numpy.__version__)"
+          python -m numpy.f2py -v
+          python -m pytest --version
+          ipython --version
+
+          [ "${{ matrix.python-version }}" \
+            == "$(python -c 'import sys; print(sys.version_info.major)')" ] || {
+            echo "Bad micromamba (conda) enviroment" 1>&2
+            false
+          }
+
+          if [ "${{ matrix.platform }}" == "win32" ]; then
+            # https://github.com/numpy/numpy/issues/16416
+            # https://github.com/numpy/numpy/pull/20311/files
+            nmpcor="--fcompiler=gnu95 --compiler=mingw32"
+
+            sed -e '/^ *library_dirs *= *\(.*\)lib$/s//&;\1bin/' \
+              -i -- "$CONDA_PREFIX/Lib/site-packages/numpy/distutils/site.cfg"
+          else
+            nmpcor=""
+          fi
+          python -m numpy.f2py ${nmpcor} -c test/fib1.f -m fib1
+          python -c \
+            'import fib1, numpy as np; a=np.zeros(8,"d"); fib1.fib(a); print(a)'
+          python -m numpy.f2py --help-link blas
+          python -m numpy.f2py --help-link lapack
+
+      - name: Test with pytest
+        run: |
+          JUPYTER_PLATFORM_DIRS=1 bash test/install_and_test.sh
+...

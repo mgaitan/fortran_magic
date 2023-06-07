@@ -22,10 +22,10 @@ from subprocess import Popen, PIPE
 
 import errno
 
-try:
+try:                       # TODO remove
     import hashlib
 except ImportError:
-    import md5 as hashlib
+    import md5 as hashlib  # XXX need for python <2.5
 
 from IPython.core.magic import Magics, magics_class, line_magic, cell_magic
 from IPython.core import display, magic_arguments
