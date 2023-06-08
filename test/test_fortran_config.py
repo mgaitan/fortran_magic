@@ -9,10 +9,13 @@ WARNING: Tests change `%fortran_config`, so they are not parallel
 processes safe.
 """
 
+import os
+import shutil
 import sys
 import warnings
 
 import IPython.core.interactiveshell as ici
+import IPython.paths
 import pytest
 
 # For slightly faster compilations.
@@ -146,16 +149,11 @@ MAXLOG = 10**9
         pytest.param(
             None, "-vvv", [6, MAXLOG], [0, MAXLOG],
             marks=pytest.mark.paranoid),
-        ("-v", "", [1, 2], [0, 0]),
+        ("-v", "--add-hash 1", [1, 2], [0, 0]),
+        (None, "--add-hash 2", [1, 2], [0, 0]),
         pytest.param(
-            None, "", [1, 2], [0, 0],
-            marks=pytest.mark.xfail if sys.platform.startswith("win32")
-            else []),
-        pytest.param(
-            None, "", [1, 2], [0, 0],
-            marks=[pytest.mark.paranoid] +
-            [pytest.mark.xfail] if sys.platform.startswith("win32")
-            else []),
+            None, "--add-hash 3", [1, 2], [0, 0],
+            marks=pytest.mark.paranoid),
         ])
 def test_v(ctxish, f_config_arg, fortran_arg, outrange, errrange):
     """
@@ -177,6 +175,18 @@ def test_v(ctxish, f_config_arg, fortran_arg, outrange, errrange):
     ctxish.check_pattern([
         {'a': fortran_arg, 'ps': [{'p': "\n", 'o': outrange, 'e': errrange}]},
         ])
+
+
+@pytest.mark.fast
+def test_intermediate_rm_rf_ipython_fortran():
+    """
+    rm -r {get_ipython_cache_dir()}/fortranmagic
+    """
+
+    fm = 'fortranmagic'
+    lib_dir = os.path.join(IPython.paths.get_ipython_cache_dir(), fm)
+    if os.path.exists(lib_dir):
+        shutil.rmtree(lib_dir, ignore_errors=True)
 
 
 @pytest.mark.fast
@@ -230,6 +240,7 @@ def test_link_extra(ctxish, f_config_arg, fortran_arg):
     """
 
     ctxish.f_config(f_config_arg)
+    ctxish.f_config("--clean-cache")
     ctxish.check_pattern([
         {'a': "-vv " + fortran_arg,
          'ps': [

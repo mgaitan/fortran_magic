@@ -36,4 +36,5 @@ cp -rp CHANGES.rst README.rst \
 (cd "$tdir" && \
     python -m pytest "$@" --cov=fortranmagic --capture=fd \
     --cov-report=term-missing --cov-report=html)
+rm -rf install_and_test-htmlcov
 cp -r "$tdir"/htmlcov install_and_test-htmlcov

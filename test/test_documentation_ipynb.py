@@ -24,13 +24,13 @@ from nbconvert.preprocessors import ExecutePreprocessor
 DTE_FAST = 'fast'
 DTE_MEDIUM = '_medium'  # No `DTE_TAGS`
 DTE_SLOW = 'slow'
-DTE_RANDOM = 'random'
+DTE_RANDOMS = {'random', 'random_long'}
 DTE_TAGS = {DTE_FAST, DTE_SLOW}
 DTE_SKIPS = {'skip', 'skip_darwin', 'skip_linux', 'skip_win32'}
 DTE_XFAILS = {'xfail', 'xfail_darwin', 'xfail_linux', 'xfail_win32'}
 
 # All kinds of notebook cell tags
-DTA_TAGS = DTE_TAGS | {DTE_MEDIUM, DTE_RANDOM} | DTE_SKIPS | DTE_XFAILS
+DTA_TAGS = DTE_TAGS | {DTE_MEDIUM} | DTE_RANDOMS | DTE_SKIPS | DTE_XFAILS
 
 DTE_TESTED = set()
 
@@ -139,7 +139,7 @@ def documentation_testing_engine(tags, verbose):
                 xfail_cells += 1
                 continue
             assert False, "for cell: " + str(e)
-        if DTE_RANDOM in stags:
+        if DTE_RANDOMS & stags:
             continue
         try:
             assert not (('outputs' in t) ^ ('outputs' in e)), \

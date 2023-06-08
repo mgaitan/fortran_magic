@@ -31,6 +31,8 @@ def test_load_ext():
         "%fortran_config --defaults",
         tdigits,
         "assert 24 == test_digits(), test_digits()",
+        tdigits,
+        "assert 24 == test_digits(), test_digits()",
         "%fortran_config --f90flags '-fdefault-real-8'",
         tdigits,
         "assert 53 == test_digits(), test_digits()",
