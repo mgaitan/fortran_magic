@@ -36,7 +36,7 @@ from IPython.utils.io import capture_output
 from numpy.distutils import fcompiler
 from numpy.f2py import f2py2e
 
-__version__ = '0.7.2'
+__version__ = '0.8'
 fcompiler.load_all_fcompiler_classes()
 
 

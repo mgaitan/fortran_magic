@@ -2,8 +2,8 @@
 Changelog
 =========
 
-0.7.2 / 2023-06-08
-------------------
+0.8 / 2023-06-08
+----------------
 
 - Fix use deprecating ``imp`` module (removed from Python 3.12b2)
 
