@@ -473,9 +473,14 @@ def load_ipython_extension(ip):
     ip.register_magics(FortranMagics)
 
     # enable fortran highlight
-    patch = ("IPython.config.cell_magic_highlight['magic_fortran'] = "
-             "{'reg':[/^%%fortran/]};")
-    js = display.Javascript(data=patch,
-                            lib=["https://raw.github.com/marijnh/CodeMirror/master/mode/"
-                                 "fortran/fortran.js"])
+    patch = """
+        if(typeof IPython === 'undefined') {
+            console.log('fortranmagic.py: TDOO: JupyterLab ' +
+                        'syntax highlight - unimplemented.');
+        } else {
+            IPython.CodeCell.options_default
+            .highlight_modes['magic_fortran'] = {'reg':[/^%%fortran/]};
+        }
+        """
+    js = display.Javascript(data=patch)
     display.display_javascript(js)
