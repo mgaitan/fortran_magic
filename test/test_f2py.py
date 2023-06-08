@@ -1,29 +1,28 @@
-# -*- coding: utf-8 -*-
-import pytest
+# vim:set sw=4 ts=8 fileencoding=utf-8:
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright © 2023, Serguei E. Leontiev (leo@sai.msu.ru)
+#
+"""Check `numpy.f2py` base functionality."""
 
-import numpy as np
-import numpy.f2py
-import os
-import platform
 import subprocess
 import sys
 
-
-sys.path.insert(0, os.getcwd())  # Load modules from `pytest` starting directory
-
-if platform.system() == 'Windows':
-    extra_args = ['--fcompiler=gnu95', '--compiler=mingw32']
-else:
-    extra_args = []
+import numpy as np
+import numpy.f2py
+import pytest
 
 
-# Test numpy.f2py.compile
-# See: https://numpy.org/doc/stable/f2py/usage.html#numpy.f2py.compile
-@pytest.mark.skipif(platform.system() == 'Windows',
+@pytest.mark.skipif(sys.platform.startswith("win"),
                     reason="Probably gnu95/mingw32 can't load module "
                            "with print")
 @pytest.mark.slow
-def test_f2py_compile_fsource(capfd):
+def test_f2py_compile_fsource(capfd, numpy_correct_compilers):
+    """
+    Check `numpy.f2py.compile`.
+
+    See: https://numpy.org/doc/stable/f2py/usage.html#numpy.f2py.compile
+    """
+
     mod = 'hello'
     fsource = '''
       subroutine foo
@@ -33,28 +32,31 @@ def test_f2py_compile_fsource(capfd):
       end
     '''
     assert 0 == numpy.f2py.compile(fsource, modulename=mod, verbose=0,
-                                   extra_args=extra_args)
+                                   extra_args=numpy_correct_compilers)
 
     import hello
 
     hello.foo()
 
-    out, err = capfd.readouterr()
+    out, _ = capfd.readouterr()
     sout = out.splitlines()
     assert " Hello world!" in sout  # Fortran `print` add first space
 
 
-# Test numpy.f2py command line
-# https://numpy.org/doc/stable/f2py/f2py.getting-started.html#
 @pytest.mark.slow
-def test_f2py_command():
+def test_f2py_command(numpy_correct_compilers):
+    """
+    Check `numpy.f2py` command line.
+
+    https://numpy.org/doc/stable/f2py/f2py.getting-started.html#
+    """
+
     tdir = 'test'
     mod = 'fib1'
-    ret = subprocess.run([sys.executable, '-m', 'numpy.f2py',
-                          '-c', tdir + '/' + mod + '.f', '-m', mod]
-                         + extra_args,
-                         check=True)
-    assert 0 == ret.returncode
+    ret = subprocess.check_call([sys.executable, '-m', 'numpy.f2py',
+                                '-c', tdir + '/' + mod + '.f', '-m', mod]
+                                + numpy_correct_compilers)
+    assert 0 == ret
 
     import fib1
 

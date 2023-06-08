@@ -2,15 +2,43 @@
 Changelog
 =========
 
-0.7.1 / 2022-04-12
+0.8 / 2023-06-08
+----------------
+
+- Fix use deprecating ``imp`` module (removed from Python 3.12b2)
+
+- Fix exponential duplication any not boolean flags of
+  ``%%fortran_config``
+
+- Include stored ``%%fortran_config``'s args in hashing
+
+- Don't rebuild cell if the module already loaded and hash not changed
+  (Unix don't reload already loaded shared library with same name.
+  Windows can't rewrite already loaded DLL)
+
+- Repair fortran highlighting in a ``%%fortran`` cell for ``nbclassic``
+  (Fortran highlighting for ``JupyterLab`` - unimplemented, for
+  ``IPython 3.x`` - removed)
+
+- Printing compilers diagnostics for build errors by ``%%fortran``
+  without ``-vvv`` flag
+
+`Serguei E. Leontiev`_
+
+.. _Serguei E. Leontiev: https://github.com/Serge3leo
+
+
+0.7.1 / 2023-04-12
 ------------------
 
-- Synchronize version number in fortranmagic.py & setup.py (TBD, TBD, https://github.com/Serge3leo)
+- Synchronize version number in fortranmagic.py & setup.py (2023-04-10,
+  https://github.com/Serge3leo)
 
-- Patch fortran source in compiled object. (029d890, 2020-08-01, https://github.com/mgaitan)
+- Patch fortran source in compiled object. (029d890, 2020-08-01,
+  https://github.com/mgaitan)
 
 - Fix deprecation warning (3667bc1, 2017-08-18, https://github.com/guihigashi)
-  [IPython.utils.path removed from IPython 8.x] 
+  [IPython.utils.path removed from IPython 8.x]
 
 - Simplify f2py execution. (d8a058f, 2016-06-04, https://github.com/QuLogic)
   Don't change directories, and don't mangle `sys.argv`. The former can be
@@ -18,7 +46,7 @@ Changelog
   from when the f2py module was imported directly.
 
 
-0.7 / 2016-03-13 
+0.7 / 2016-03-13
 ----------------
 
 - Fix cross compatibility with older NumPy and Python 3. (15ab10c)

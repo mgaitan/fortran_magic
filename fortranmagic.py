@@ -14,35 +14,46 @@ Author:
 
 from __future__ import print_function
 
-import imp
+import errno
+import hashlib
 import io
 import os
+import random
+import shutil
 import sys
-from subprocess import Popen, PIPE
-
-import errno
-
-try:
-    import hashlib
-except ImportError:
-    import md5 as hashlib
-
-from IPython.core.magic import Magics, magics_class, line_magic, cell_magic
-from IPython.core import display, magic_arguments
-from IPython.utils import py3compat
-from IPython.utils.io import capture_output
-from IPython.paths import get_ipython_cache_dir
-import numpy as np
-from numpy.f2py import f2py2e
-from numpy.distutils import fcompiler
-from distutils.core import Distribution
 from distutils.ccompiler import compiler_class
 from distutils.command.build_ext import build_ext
+from distutils.core import Distribution
 from distutils.version import LooseVersion
+from subprocess import PIPE, Popen
 
+import numpy as np
+from IPython.core import display, magic_arguments
+from IPython.core.magic import Magics, cell_magic, line_magic, magics_class
+from IPython.paths import get_ipython_cache_dir
+from IPython.utils import py3compat
+from IPython.utils.io import capture_output
+from numpy.distutils import fcompiler
+from numpy.f2py import f2py2e
 
-__version__ = '0.7.2'
+__version__ = '0.8'
 fcompiler.load_all_fcompiler_classes()
+
+
+try:
+    import importlib.machinery
+    import importlib.util
+
+    def _imp_load_dynamic(name, path):
+        loader = importlib.machinery.ExtensionFileLoader(name, path)
+        spec = importlib.machinery.ModuleSpec(name=name, loader=loader,
+                                              origin=path)
+        return importlib.util.module_from_spec(spec)
+except ImportError:
+    import imp
+
+    def _imp_load_dynamic(name, path):
+        return imp.load_dynamic(name, path)
 
 
 def compose(*decorators):
@@ -70,8 +81,7 @@ def unquote(v):
     if ((v.startswith('"') and v.endswith('"')) or
             (v.startswith("'") and v.endswith("'"))):
         return v[1:-1]
-    else:
-        return v
+    return v
 
 
 @magics_class
@@ -136,15 +146,65 @@ class FortranMagics(Magics):
                     --extra '-D<define> -U<name>'
                     --extra '-DPREPEND_FORTRAN -DUPPERCASE_FORTRAN'
                     etc. """
-        ))
+        ),
+        magic_arguments.argument(
+            '--add-hash', action='append', default=[],
+            help="Additional string to hash of code, flags, etc."
+        ),
+        )
+
+    def _cache_init(self):
+        """Create random cache directory."""
+
+        while True:
+            cdir = os.path.join(get_ipython_cache_dir(),
+                                'fortranmagic',
+                                "%08x" % random.getrandbits(32))
+            try:
+                os.makedirs(cdir)
+                break
+            except OSError:
+                pass
+        self.shell.db['fortranmagic_cache'] = cdir
+        self._lib_dir = cdir
+
+    def _cache_open(self):
+        """Open cache directory on session start"""
+
+        try:
+            cdir = self.shell.db['fortranmagic_cache']
+            if os.path.isdir(cdir):
+                self._lib_dir = cdir
+                return
+        except (KeyError, OSError):
+            pass
+        self._cache_init()
+
+    def _cache_check(self):
+        """Check cache directory.
+
+        If the parallel session executed `__cache_init()`, then the
+        current session still continues to use the old directory (the
+        one that was considered at the start).
+        """
+
+        if not os.path.isdir(self._lib_dir):
+            try:
+                os.makedirs(self._lib_dir)
+            except OSError:
+                self._cache_init()
+
+    def _cache_clean(self):
+        shutil.rmtree(os.path.join(get_ipython_cache_dir(),
+                                   'fortranmagic'),
+                      ignore_errors=True)
+        self._cache_init()
 
     def __init__(self, shell):
         super(FortranMagics, self).__init__(shell=shell)
         self._reloads = {}
         self._code_cache = {}
-        self._lib_dir = os.path.join(get_ipython_cache_dir(), 'fortran')
-        if not os.path.exists(self._lib_dir):
-            os.makedirs(self._lib_dir)
+        self._cache_open()
 
     def _import_all(self, module, verbosity=0, code=''):
         imported = []
@@ -242,6 +302,10 @@ class FortranMagics(Magics):
         '--defaults', action="store_true", help="Delete custom configuration "
         "and back to default"
     )
+    @magic_arguments.argument(
+        '--clean-cache', action="store_true", help="Clean fortran modules "
+        "build cache"
+    )
     @line_magic
     def fortran_config(self, line):
         """
@@ -250,6 +314,10 @@ class FortranMagics(Magics):
             %fortran_config
 
                 Show the current custom configuration
+
+            %fortran_config --clean-cache
+
+                Clean fortran modules build cache
 
             %fortran_config --defaults
 
@@ -261,20 +329,25 @@ class FortranMagics(Magics):
         """
 
         args = magic_arguments.parse_argstring(self.fortran_config, line)
-        if args.defaults:
+        if args.clean_cache:
+            print("Clean cache:", self._lib_dir)
+            self._cache_clean()
+            if args.verbosity >= 1:
+                print("New cache:", self._lib_dir)
+        elif args.defaults:
             try:
-                del self.shell.db['fortran']
+                del self.shell.db['fortranmagic']
                 print("Deleted custom config. Back to default arguments for %%fortran")
             except KeyError:
                 print("No custom config found for %%fortran")
         elif not line:
             try:
-                line = self.shell.db['fortran']
+                line = self.shell.db['fortranmagic']
+                print("Current defaults arguments for %%fortran:\n\t%s" % line)
             except KeyError:
                 print("No custom config found for %%fortran")
-            print("Current defaults arguments for %%fortran:\n\t%s" % line)
         else:
-            self.shell.db['fortran'] = line
+            self.shell.db['fortranmagic'] = line
             print("New default arguments for %%fortran:\n\t%s" % line)
 
     @my_magic_arguments
@@ -283,10 +356,10 @@ class FortranMagics(Magics):
         """Compile and import everything from a Fortran code cell, using f2py.
 
         The content of the cell is written to a `.f90` file in the
-        directory `IPYTHONDIR/fortran` using a filename with the hash of the
-        code. This file is then compiled. The resulting module
-        is imported and all of its symbols are injected into the user's
-        namespace.
+        directory `IPYTHONDIR/fortran` using a filename with the hash of
+        the code, flags and configuration data. This file is then
+        compiled. The resulting module is imported and all of its
+        symbols are injected into the user's namespace.
 
 
         Usage
@@ -301,25 +374,20 @@ class FortranMagics(Magics):
 
         """
 
-        try:
-            # custom saved arguments
-            saved_defaults = vars(
-                magic_arguments.parse_argstring(self.fortran,
-                                                self.shell.db['fortran']))
-            self.fortran.parser.set_defaults(**saved_defaults)
-        except KeyError:
-            saved_defaults = {'verbosity': 0}
-
         # verbosity is a "count" argument were each ocurrence is
         # added implicit.
         # so, for instance, -vv in %fortran_config and -vvv in %%fortran means
         # a nonsense verbosity=5.
         # To override: if verbosity is given for the magic cell
         # we ignore the saved config.
-        if '-v' in line:
-            self.fortran.parser.set_defaults(verbosity=0)
-
         args = magic_arguments.parse_argstring(self.fortran, line)
+        f_config = self.shell.db.get('fortranmagic', "")
+        if f_config:
+            sverbosity = args.verbosity
+            args = magic_arguments.parse_argstring(self.fortran,
+                                                   f_config + " " + line)
+            if sverbosity > 0:
+                args.verbosity = sverbosity
 
         # boolean flags
         f2py_args = ['--%s' % k for k, v in vars(args).items() if v is True]
@@ -346,26 +414,35 @@ class FortranMagics(Magics):
             f2py_args.extend(extras)
 
         code = cell if cell.endswith('\n') else cell + '\n'
-        key = code, line, sys.version_info, sys.executable, f2py2e.f2py_version
+        self._cache_check()
+        key = (code, line, f_config,
+               self._lib_dir,
+               sys.version_info, sys.executable, f2py2e.f2py_version)
 
         module_name = "_fortran_magic_" + \
                       hashlib.md5(str(key).encode('utf-8')).hexdigest()
 
-        module_path = os.path.join(self._lib_dir, module_name + self.so_ext)
+        if module_name in sys.modules:
+            module = sys.modules[module_name]
+            print("The extension", module_name,
+                  "is already loaded. To reload it, use:")
+            print("  %fortran_config --clean-cache")
+        else:
+            module_path = os.path.join(self._lib_dir, module_name + self.so_ext)
 
-        f90_file = os.path.join(self._lib_dir, module_name + '.f90')
-        f90_file = py3compat.cast_bytes_py2(f90_file,
-                                            encoding=sys.getfilesystemencoding())
-        with io.open(f90_file, 'w', encoding='utf-8') as f:
-            f.write(code)
+            f90_file = os.path.join(self._lib_dir, module_name + '.f90')
+            f90_file = py3compat.cast_bytes_py2(f90_file,
+                                                encoding=sys.getfilesystemencoding())
+            with io.open(f90_file, 'w', encoding='utf-8') as f:
+                f.write(code)
 
-        res = self._run_f2py(f2py_args + ['-m', module_name, '-c', f90_file],
-                             verbosity=args.verbosity)
-        if res != 0:
-            raise RuntimeError("f2py failed, see output")
+            res = self._run_f2py(f2py_args + ['-m', module_name, '-c', f90_file],
+                                 verbosity=args.verbosity)
+            if res != 0:
+                raise RuntimeError("f2py failed, see output")
 
-        self._code_cache[key] = module_name
-        module = imp.load_dynamic(module_name, module_path)
+            self._code_cache[key] = module_name
+            module = _imp_load_dynamic(module_name, module_path)
         self._import_all(module, verbosity=args.verbosity, code=code)
 
     @property
@@ -396,9 +473,14 @@ def load_ipython_extension(ip):
     ip.register_magics(FortranMagics)
 
     # enable fortran highlight
-    patch = ("IPython.config.cell_magic_highlight['magic_fortran'] = "
-             "{'reg':[/^%%fortran/]};")
-    js = display.Javascript(data=patch,
-                            lib=["https://raw.github.com/marijnh/CodeMirror/master/mode/"
-                                 "fortran/fortran.js"])
+    patch = """
+        if(typeof IPython === 'undefined') {
+            console.log('fortranmagic.py: TDOO: JupyterLab ' +
+                        'syntax highlight - unimplemented.');
+        } else {
+            IPython.CodeCell.options_default
+            .highlight_modes['magic_fortran'] = {'reg':[/^%%fortran/]};
+        }
+        """
+    js = display.Javascript(data=patch)
     display.display_javascript(js)

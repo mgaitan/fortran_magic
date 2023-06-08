@@ -1,3 +1,7 @@
+C vim:set sw=4 ts=8 fileencoding=ascii:
+C SPDX-License-Identifier: BSD-3-Clause
+C Copyright (c) 2005-2023, NumPy Developers.
+C
 C FILE: FIB1.F
       SUBROUTINE FIB(A,N)
 C

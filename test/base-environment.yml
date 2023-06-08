@@ -1,0 +1,33 @@
+---
+# vim:set sw=2 ts=8 et fileencoding=utf8:
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright © 2023, Serguei E. Leontiev (leo@sai.msu.ru)
+#
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  # setup.py of fortranmagic.py dependencies:
+  - ipython
+  - numpy
+  # - charset-normalizer  # only: python=3
+  # Tests & Lints dependencies:
+  - flake8
+  # - typing              # only: python=2  # bug flake8 dependices?
+  - yamllint
+  - pytest
+  - pytest-cov
+  - nbconvert
+  - nbformat
+  - ipykernel
+  # numpy.f2py compilers dependencies:
+  # - fortran-compiler    # only: osx-64
+  # - m2w64-gcc-fortran   # only: win-64
+  # documentation.ipynb dependencies:
+  - blas
+  - lapack
+  # Jupyter Lab/Notebbok for manual testing:
+  # - jupyter             # only: manual testing
+  # - jupyterlab          # only: manual testing
+  # - notebook            # only: manual testing
+...
