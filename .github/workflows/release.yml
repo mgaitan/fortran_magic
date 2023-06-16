@@ -1,10 +1,11 @@
+---
 name: Publish Python 🐍 distributions 📦 to PyPI
 
 on:
   push:
     tags:
       - "*"
-  
+
 jobs:
   pypi-publish:
     name: upload release to PyPI
@@ -18,7 +19,8 @@ jobs:
         uses: actions/checkout@v3
       - name: install build
         run: python -m pip install --upgrade build
-      - name: build 
+      - name: build
         run: python -m build
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+...
