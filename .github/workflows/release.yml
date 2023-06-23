@@ -1,7 +1,10 @@
 ---
+# vim:set sw=2 ts=8 et fileencoding=utf8:
+# SPDX-License-Identifier: BSD-3-Clause
+#
 name: Publish Python 🐍 distributions 📦 to PyPI
 
-on:
+on:  # yamllint disable-line rule:truthy
   push:
     tags:
       - "*"

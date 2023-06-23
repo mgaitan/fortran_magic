@@ -70,7 +70,11 @@ jobs:
 
       - name: Lint with flake8 & ymllint
         run: |
-          yamllint .
+          if [ "${{ matrix.platform }}" != "win32" ]; then
+            # ``yamllint`` bug workaround
+            # https://github.com/adrienverge/yamllint/issues/347
+            yamllint .
+          fi
           flake8 . --count --max-line-length=127 --statistics
 
       - name: Correct environment variable conda for f2py
