@@ -2,6 +2,20 @@
 Changelog
 =========
 
+0.9 / 2024-05-27
+----------------
+
+- Fix for NumPy 1.26 & Python 3.12. Warning: When using the Meson build
+  system (3.12 and later), there are some limitations and differences in
+  the interface.
+
+- Ready to NumPy 2.0
+
+`Serguei E. Leontiev`_
+
+.. _Serguei E. Leontiev: https://github.com/Serge3leo
+
+
 0.8 / 2023-06-16
 ----------------
 
