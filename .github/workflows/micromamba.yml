@@ -19,7 +19,7 @@ jobs:
       fail-fast: true
       matrix:
         os: ["macos", "ubuntu", "windows"]
-        python-version: ["3", "2"]
+        python-version: ["3", "3.11", "2"]
         include:
           - os: "macos"
             platform: "darwin"
@@ -36,10 +36,17 @@ jobs:
           - python-version: "2"
             py_spec: "python=2"
             py_pkgs: "typing"
+            numpy_meson: false
+
+          - python-version: "3.11"
+            py_spec: "python=3.11"
+            py_pkgs: "charset-normalizer"
+            numpy_meson: false
 
           - python-version: "3"
             py_spec: "python=3"
             py_pkgs: "charset-normalizer"
+            numpy_meson: true
 
     name: ${{ matrix.platform }} ${{ matrix.py_spec }}
     runs-on: ${{ matrix.os }}-latest
@@ -79,37 +86,109 @@ jobs:
 
       - name: Correct environment variable conda for f2py
         if: ${{ matrix.platform == 'darwin' && matrix.py_spec == 'python=2' }}
-        run: echo LDFLAGS="-shared $(python-config --ldflags)" >> $GITHUB_ENV
+        run: |
+          echo LDFLAGS="-shared $(python-config --ldflags)" >> "$GITHUB_ENV"
+
+      - name: Workaround conda pkg-config for win32 f2py
+        if: ${{ matrix.platform == 'win32' && matrix.numpy_meson }}
+        run: |
+          cp -n "$CONDA_PREFIX/Library/lib/pkgconfig"/{mkl-sdl,lapack}.pc
+          cp -n "$CONDA_PREFIX/Library/lib/pkgconfig"/{mkl-sdl,blas}.pc
+
+      - name: f2py workaround  # https://github.com/numpy/numpy/issues/26107
+        if: ${{ matrix.numpy_meson }}
+        run: |
+          ff=`python -c "import numpy.f2py; print(numpy.f2py.__file__)"`
+          mbt=`dirname $ff`/_backends/meson.build.template
+          mv "$mbt" "$mbt".orig
+          cp "$mbt".orig "$mbt"
+          sed \
+            -e "/import('python').find_installation(/s/'\${python}', //" \
+            -i -- "$mbt"
+          if diff -w -u "$mbt".orig "$mbt" ; then
+            echo "FAIL: Workaround patch"
+            exit 2
+          else
+            echo "OK: Workaround patch"
+          fi
 
       - name: Precheck f2py
         run: |
-          python --version
-          python -c "import numpy; print(numpy.__version__)"
-          python -m numpy.f2py -v
-          python -m pytest --version
-          ipython --version
+          echo "python: " ; python --version
+          echo "numpy:  " ; python -c "import numpy; print(numpy.__version__)"
+          echo "f2py:   " ; python -m numpy.f2py -v
+          echo "pytest: " ; python -m pytest --version
+          echo "ipython:" ; ipython --version
+          if "${{ matrix.numpy_meson }}"; then
+            echo "meson:     " ; meson -v
+            echo "ninja:     " ; ninja --version
+            cmake --version
+            echo "pkg-config:" ; pkg-config --version
 
-          [ "${{ matrix.python-version }}" \
-            == "$(python -c 'import sys; print(sys.version_info.major)')" ] || {
-            echo "Bad micromamba (conda) enviroment" 1>&2
-            false
-          }
-
-          if [ "${{ matrix.platform }}" == "win32" ]; then
-            # https://github.com/numpy/numpy/issues/16416
-            # https://github.com/numpy/numpy/pull/20311/files
-            nmpcor="--fcompiler=gnu95 --compiler=mingw32"
-
-            sed -e '/^ *library_dirs *= *\(.*\)lib$/s//&;\1bin/' \
-              -i -- "$CONDA_PREFIX/Lib/site-packages/numpy/distutils/site.cfg"
-          else
-            nmpcor=""
+            pkg-config --list-all
           fi
-          python -m numpy.f2py ${nmpcor} -c test/fib1.f -m fib1
-          python -c \
-            'import fib1, numpy as np; a=np.zeros(8,"d"); fib1.fib(a); print(a)'
-          python -m numpy.f2py --help-link blas
-          python -m numpy.f2py --help-link lapack
+
+          if [ "${{ matrix.platform }}" != "win32" ]; then
+            nmpcor=""
+          else
+            "${{ matrix.numpy_meson }}" || {
+              # https://github.com/numpy/numpy/issues/16416
+              # https://github.com/numpy/numpy/pull/20311/files
+              nmpcor="--fcompiler=gnu95 --compiler=mingw32"
+            }
+
+            nmpdusc="$CONDA_PREFIX/Lib/site-packages/numpy/distutils/site.cfg"
+            if [ -f "$nmpdusc" ]; then
+              sed -e '/^ *library_dirs *= *\(.*\)lib$/s//&;\1bin/' \
+                -i -- "$nmpdusc"
+              head "$nmpdusc"
+              printf "%s: patched\n" "$nmpdusc" 1>&2
+            elif [ -d `dirname "$nmpdusc"` ]; then
+              base="$CONDA_PREFIX/Library"
+              echo "
+                [DEFAULT]
+                library_dirs = $base/lib;$base/bin
+                include_dirs = $base/include
+                libraries = blas,cblas,lapack
+                " | sed 's/^[[:space:]]*//' > "$nmpdusc"
+              head "$nmpdusc"
+              printf "%s: Don't exist\n" "$nmpdusc" 1>&2
+            else
+              printf "%s: Directory don't exist\n" "$nmpdusc" 1>&2
+            fi
+          fi
+
+          if "${{ matrix.numpy_meson }}"; then
+            ld_lapack="--dep lapack"
+          else
+            ld_lapack="--link-lapack"
+          fi
+
+          python -m numpy.f2py --verbose ${nmpcor} -c test/fib1.f -m fib1
+          python -c 'if 1:
+            import fib1
+            import numpy as np
+
+            a=np.zeros(8,"d")
+            fib1.fib(a)
+            print(a)
+            '
+
+          python -m numpy.f2py --verbose --help-link blas
+          python -m numpy.f2py --verbose --help-link lapack
+
+          python -m numpy.f2py --verbose ${nmpcor} \
+            -c test/solve.f90 -m solve $ld_lapack
+          python -c 'if 1:
+            from solve import solve
+            import numpy as np
+
+            A = np.array([[1, 2.5], [-3, 4]])
+            b = np.array([1, 2.5])
+            x = solve(A, b)
+            print(x)
+            np.testing.assert_allclose(x, np.linalg.solve(A, b))
+            '
 
       - name: Test with pytest
         run: |

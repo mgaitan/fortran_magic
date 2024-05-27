@@ -18,6 +18,8 @@ import IPython.core.interactiveshell as ici
 import IPython.paths
 import pytest
 
+_USE_MESON = (sys.version_info >= (3, 12))
+
 # For slightly faster compilations.
 FORTRAN = "%%fortran --noopt  --f90flags '-O0' "
 
@@ -245,6 +247,8 @@ def test_link_extra(ctxish, f_config_arg, fortran_arg):
         {'a': "-vv " + fortran_arg,
          'ps': [
             {'p': "-DNPY_NO_DEPRECATED_API=0", 'o': [2, 2], 'e': [0, 0]},
-            {'p': "--link-lapack", 'o': [1, 1], 'e': [0, 0]},
-            {'p': "--link-blas", 'o': [1, 1], 'e': [0, 0]},
+            {'p': "--dep lapack" if _USE_MESON else "--link-lapack",
+             'o': [1, 1], 'e': [0, 0]},
+            {'p': "--dep blas" if _USE_MESON else "--link-blas",
+             'o': [1, 1], 'e': [0, 0]},
             ]}])
