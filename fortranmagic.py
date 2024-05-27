@@ -33,12 +33,17 @@ from IPython.core.magic import Magics, cell_magic, line_magic, magics_class
 from IPython.paths import get_ipython_cache_dir
 from IPython.utils import py3compat
 from IPython.utils.io import capture_output
-from numpy.distutils import fcompiler
 from numpy.f2py import f2py2e
 
 __version__ = '0.8'
-fcompiler.load_all_fcompiler_classes()
 
+try:
+    from numpy.distutils import fcompiler
+
+    _use_meson = False
+    fcompiler.load_all_fcompiler_classes()
+except ImportError:
+    _use_meson = True
 
 try:
     import importlib.machinery
@@ -87,7 +92,10 @@ def unquote(v):
 @magics_class
 class FortranMagics(Magics):
 
-    allowed_fcompilers = sorted(fcompiler.fcompiler_class.keys())
+    if _use_meson:
+        allowed_fcompilers = None
+    else:
+        allowed_fcompilers = sorted(fcompiler.fcompiler_class.keys())
     allowed_compilers = sorted(compiler_class.keys())
 
     my_magic_arguments = compose(
@@ -97,16 +105,24 @@ class FortranMagics(Magics):
             help="increase output verbosity"
         ),
         magic_arguments.argument(
+            '--backend',
+            choices=['distutils', 'meson'],
+            help="""Specify the build backend for the compilation
+                 process. On Python 3.12 or higher, the default is
+                 'meson', see numpy.f2py documentation for details.
+                 [TODO, unimplemented]"""  # TODO:XXX
+        ),
+        magic_arguments.argument(
             '--fcompiler',
             choices=allowed_fcompilers,
             help="""Specify Fortran compiler type by vendor.
-                 See %%f2py_help --fcompiler""",
+                 See %%f2py_help --fcompiler. [NO_MESON]""",
         ),
         magic_arguments.argument(
             '--compiler',
             choices=allowed_compilers,
             help="""Specify C compiler type (as defined by distutils).
-                    See %%f2py_help --compiler"""
+                    See %%f2py_help --compiler.  [NO_MESON]"""
         ),
         magic_arguments.argument(
             '--f90flags', help="Specify F90 compiler flags"
@@ -115,21 +131,25 @@ class FortranMagics(Magics):
             '--f77flags', help="Specify F77 compiler flags"
         ),
         magic_arguments.argument(
-            '--opt', help="Specify optimization flags"
+            '--opt', help="Specify optimization flags. [NO_MESON]"
         ),
         magic_arguments.argument(
-            '--arch', help="Specify architecture specific optimization flags"
+            '--arch',
+            help="""Specify architecture specific optimization flags.
+                 [NO_MESON]"""
         ),
         magic_arguments.argument(
-            '--noopt', action="store_true", help="Compile without optimization"
+            '--noopt', action="store_true",
+            help="Compile without optimization. [NO_MESON]"
         ),
         magic_arguments.argument(
-            '--noarch', action="store_true", help="Compile without "
-            "arch-dependent optimization"
+            '--noarch', action="store_true",
+            help="""Compile without arch-dependent optimization.
+                 [NO_MESON]"""
         ),
         magic_arguments.argument(
-            '--debug', action="store_true", help="Compile with debugging "
-            "information"
+            '--debug', action="store_true",
+            help="Compile with debugging information"
         ),
         magic_arguments.argument(
             '--link', action='append', default=[],
@@ -217,10 +237,21 @@ class FortranMagics(Magics):
             print("\nOk. The following fortran objects "
                   "are ready to use: %s" % ", ".join(imported))
 
-    def _run_f2py(self, argv, show_captured=False, verbosity=0):
+    def _run_f2py(self,
+                  argv,
+                  show_captured=False,
+                  verbosity=0,
+                  fflags=None):
         """
         Here we directly call the numpy.f2py module or the f2py executable.
         """
+        environ = None if fflags is None else os.environ.copy()
+        if fflags is not None:
+            environ = os.environ.copy()
+            environ['FFLAGS'] = environ.get('FFLAGS', '') + ' ' + fflags
+        else:
+            environ = None
+
         if np.__version__ < LooseVersion('1.10.0'):
             if sys.version_info[0] >= 3:
                 command = ['f2py3']
@@ -240,6 +271,7 @@ class FortranMagics(Magics):
                 # Refactor subprocess call to work with jupyterhub
                 try:
                     p = Popen(command, stdout=PIPE, stderr=PIPE, stdin=PIPE,
+                              env=environ,
                               cwd=self._lib_dir)
                 except OSError as e:
                     if e.errno == errno.ENOENT:
@@ -405,7 +437,14 @@ class FortranMagics(Magics):
 
         # link resource
         if args.link:
-            resources = ['--link-%s' % r for r in args.link]
+            # TODO: Now `f2py --backend meson` unimplemented
+            if not _use_meson:
+                resources = ['--link-%s' % r for r in args.link]
+            else:
+                resources = []
+                for r in args.link:
+                    resources.append('--dep')
+                    resources.append(r)
             f2py_args.extend(resources)
 
         if args.extra:
@@ -430,14 +469,49 @@ class FortranMagics(Magics):
         else:
             module_path = os.path.join(self._lib_dir, module_name + self.so_ext)
 
-            f90_file = os.path.join(self._lib_dir, module_name + '.f90')
-            f90_file = py3compat.cast_bytes_py2(f90_file,
-                                                encoding=sys.getfilesystemencoding())
-            with io.open(f90_file, 'w', encoding='utf-8') as f:
+            fsuffix = ".f90"
+
+            # TODO: Now `f2py --backend meson` unimplemented
+            if not _use_meson:
+                fflags = None
+            else:
+                # `--f77flags` & `--f90flags`. Use `FFLAGS` workaround, see
+                # https://github.com/numpy/numpy/issues/24874#issuecomment-1762981664
+                # https://github.com/numpy/numpy/issues/24874
+
+                if args.f77flags is not None:
+                    fflags = args.f77flags
+                else:
+                    fflags = args.f90flags
+                if args.f77flags is not None and args.f90flags is not None:
+                    # TODO: f2py used requiresf90wrapper()
+                    print("Warning: ambiguity, both f77flags and f90flags "
+                          "are set, assume the %s module" % (
+                              "f77" if fflags == args.f77flags else "f90"),
+                          file=sys.stderr)
+                lfflags = unquote(fflags).split() if fflags is not None else []
+                fflags = ""
+                for flag in lfflags:
+                    if flag == "-ffixed-form":
+                        fsuffix = ".f"
+                    elif flag == "-ffree-form":
+                        fsuffix = ".f90"
+                    else:
+                        fflags += flag + " "
+                if fflags and ' ' == fflags[-1]:
+                    fflags = fflags[:-1]
+
+            f_f90_file = os.path.join(self._lib_dir, module_name + fsuffix)
+            f_f90_file = py3compat.cast_bytes_py2(
+                            f_f90_file,
+                            encoding=sys.getfilesystemencoding())
+            with io.open(f_f90_file, 'w', encoding='utf-8') as f:
                 f.write(code)
 
-            res = self._run_f2py(f2py_args + ['-m', module_name, '-c', f90_file],
-                                 verbosity=args.verbosity)
+            res = self._run_f2py(f2py_args + ['-m', module_name, '-c',
+                                              f_f90_file],
+                                 verbosity=args.verbosity,
+                                 fflags=fflags)
             if res != 0:
                 raise RuntimeError("f2py failed, see output")
 
