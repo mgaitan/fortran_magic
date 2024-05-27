@@ -15,6 +15,8 @@ import pytest
 @pytest.mark.skipif(sys.platform.startswith("win"),
                     reason="Probably gnu95/mingw32 can't load module "
                            "with print")
+@pytest.mark.skipif(np.__version__ >= "2",
+                    reason="NumPy 2.0 remove numpy.f2py.compile")
 @pytest.mark.slow
 def test_f2py_compile_fsource(capfd, numpy_correct_compilers):
     """
