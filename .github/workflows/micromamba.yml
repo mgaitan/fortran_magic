@@ -40,12 +40,14 @@ jobs:
 
           - python-version: "3.11"
             py_spec: "python=3.11"
-            py_pkgs: "charset-normalizer"
+            py_pkgs: "charset-normalizer \
+              "  # conda-forge/label/numpy_rc::_numpy_rc"
             numpy_meson: false
 
           - python-version: "3"
             py_spec: "python=3"
-            py_pkgs: "charset-normalizer"
+            py_pkgs: "charset-normalizer meson ninja cmake pkgconfig \
+              "  # conda-forge/label/numpy_rc::_numpy_rc"
             numpy_meson: true
 
     name: ${{ matrix.platform }} ${{ matrix.py_spec }}
@@ -98,18 +100,23 @@ jobs:
       - name: f2py workaround  # https://github.com/numpy/numpy/issues/26107
         if: ${{ matrix.numpy_meson }}
         run: |
-          ff=`python -c "import numpy.f2py; print(numpy.f2py.__file__)"`
-          mbt=`dirname $ff`/_backends/meson.build.template
-          mv "$mbt" "$mbt".orig
-          cp "$mbt".orig "$mbt"
-          sed \
-            -e "/import('python').find_installation(/s/'\${python}', //" \
-            -i -- "$mbt"
-          if diff -w -u "$mbt".orig "$mbt" ; then
-            echo "FAIL: Workaround patch"
-            exit 2
+          npv=`python -m numpy.f2py -v`
+          if [ "$npv" "<" "2" ]; then
+            ff=`python -c "import numpy.f2py; print(numpy.f2py.__file__)"`
+            mbt=`dirname $ff`/_backends/meson.build.template
+            mv "$mbt" "$mbt".orig
+            cp "$mbt".orig "$mbt"
+            sed \
+              -e "/import('python').find_installation(/s/'\${python}', //" \
+              -i -- "$mbt"
+            if diff -w -u "$mbt".orig "$mbt" ; then
+              echo "FAIL: Workaround patch"
+              exit 2
+            else
+              echo "OK: Workaround patch"
+            fi
           else
-            echo "OK: Workaround patch"
+            echo "Workaround don't needed"
           fi
 
       - name: Precheck f2py
