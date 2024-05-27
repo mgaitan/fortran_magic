@@ -29,5 +29,6 @@ dependencies:
   # Jupyter Lab/Notebbok for manual testing:
   # - jupyter             # only: manual testing
   # - jupyterlab          # only: manual testing
+  # - nbclassic           # only: manual testing
   # - notebook            # only: manual testing
 ...
