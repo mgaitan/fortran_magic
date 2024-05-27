@@ -6,7 +6,7 @@ long_description = (open('README.rst').read() + '\n\n' +
 
 setup(
     name='fortran-magic',
-    version='0.8',
+    version='0.9',
     description='An extension for IPython that help to use Fortran in '
                 'your interactive session.',
     long_description=long_description,

@@ -35,7 +35,7 @@ from IPython.utils import py3compat
 from IPython.utils.io import capture_output
 from numpy.f2py import f2py2e
 
-__version__ = '0.8'
+__version__ = '0.9'
 
 try:
     from numpy.distutils import fcompiler
