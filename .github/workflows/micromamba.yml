@@ -46,31 +46,41 @@ jobs:
           CACHE_NUMBER: 0  # modify to reset cache manually
         with:
           init-shell: bash
+          post-cleanup: none
           environment-name: test-env
           environment-file: test/base-environment.yml
           create-args: >-
             python=${{ matrix.python-version }} ${{ matrix.os_pkgs }}
-          cache-environment-key: >-
-            environment-${{ matrix.python-version }}-
-            ${{ steps.date.outputs.date }}-${{ env.CACHE_NUMBER }}
-          cache-downloads-key: >-
-            downloads-${{ matrix.python-version }}-
-            ${{ steps.date.outputs.date }}-${{ env.CACHE_NUMBER }}
+          cache-environment: false
+          cache-downloads: false
 
-      - name: Lint with flake8 & ymllint
+      - name: Configure pkg-config path
+        run: |
+          if [ "${{ matrix.platform }}" = "win32" ]; then
+            pkgconfig_path="$CONDA_PREFIX/Library/lib/pkgconfig"
+          else
+            pkgconfig_path="$CONDA_PREFIX/lib/pkgconfig"
+          fi
+          echo "PKG_CONFIG_PATH=$pkgconfig_path" >> "$GITHUB_ENV"
+
+      - name: Lint with ruff & yamllint
         run: |
           if [ "${{ matrix.platform }}" != "win32" ]; then
             # ``yamllint`` bug workaround
             # https://github.com/adrienverge/yamllint/issues/347
             yamllint .
           fi
-          flake8 . --count --max-line-length=127 --statistics
+          uv run --group dev ruff check .
+          uv run --group dev ruff format --check .
 
       - name: Workaround conda pkg-config for win32 f2py
         if: ${{ matrix.platform == 'win32' }}
         run: |
-          cp -n "$CONDA_PREFIX/Library/lib/pkgconfig"/{mkl-sdl,lapack}.pc
-          cp -n "$CONDA_PREFIX/Library/lib/pkgconfig"/{mkl-sdl,blas}.pc
+          pc_dir="$CONDA_PREFIX/Library/lib/pkgconfig"
+          if [ -f "$pc_dir/mkl-sdl.pc" ]; then
+            cp -n "$pc_dir/mkl-sdl.pc" "$pc_dir/lapack.pc"
+            cp -n "$pc_dir/mkl-sdl.pc" "$pc_dir/blas.pc"
+          fi
 
       - name: f2py workaround  # https://github.com/numpy/numpy/issues/26107
         run: |
@@ -107,9 +117,9 @@ jobs:
 
           pkg-config --list-all
 
-          ld_lapack="--dep lapack"
+          ld_lapack="--dep lapack --dep blas"
 
-          python -m numpy.f2py --verbose -c test/fib1.f -m fib1
+          python -m numpy.f2py --backend meson --verbose -c test/fib1.f -m fib1
           python -c 'if 1:
             import fib1
             import numpy as np
@@ -122,18 +132,23 @@ jobs:
           python -m numpy.f2py --verbose --help-link blas
           python -m numpy.f2py --verbose --help-link lapack
 
-          python -m numpy.f2py --verbose \
-            -c test/solve.f90 -m solve $ld_lapack
-          python -c 'if 1:
-            from solve import solve
-            import numpy as np
+          if pkg-config --exists blas && pkg-config --exists lapack; then
+            python -m numpy.f2py --backend meson --verbose \
+              -c test/solve.f90 -m solve $ld_lapack
+            python -c 'if 1:
+              from solve import solve
+              import numpy as np
 
-            A = np.array([[1, 2.5], [-3, 4]])
-            b = np.array([1, 2.5])
-            x = solve(A, b)
-            print(x)
-            np.testing.assert_allclose(x, np.linalg.solve(A, b))
-            '
+              A = np.array([[1, 2.5], [-3, 4]])
+              b = np.array([1, 2.5])
+              x = solve(A, b)
+              print(x)
+              np.testing.assert_allclose(x, np.linalg.solve(A, b))
+              '
+          else
+            echo "Skipping LAPACK precheck (blas/lapack not found via" \
+              "pkg-config)."
+          fi
 
       - name: Test with pytest
         run: |

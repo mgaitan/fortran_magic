@@ -8,7 +8,7 @@ dependencies:
   - numpy
   # - charset-normalizer  # only: python=3
   # Tests & Lints dependencies:
-  - flake8
+  - ruff
   # - typing              # only: python=2  # bug flake8 dependices?
   - yamllint
   - pytest
