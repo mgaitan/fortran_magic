@@ -84,6 +84,7 @@ class Cish(object):
         """Compile and check patterns in stdout/stderr."""
 
         for vf in vrngs:
+            self.uck_run("%fortran_config --clean-cache")
             _, o, e = self.chk_run(FORTRAN + vf["a"] + "\n" + GOOD_PRG)
             for p in vf["ps"]:
                 assert o.count(p["p"]) >= p["o"][0] and o.count(p["p"]) <= p["o"][1], o

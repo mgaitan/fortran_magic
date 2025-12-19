@@ -46,6 +46,7 @@ dev = [
   "nbconvert",
   "nbformat",
   "ninja",
+  "pickleshare",
   "pytest",
   "ruff",
   "tomli; python_version < '3.11'",
