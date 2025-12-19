@@ -129,15 +129,11 @@ MAXLOG = 10**9
         ("-v -v", "", [4, 5], [0, 0]),
         (None, "-v", [1, 2], [0, 0]),
         pytest.param(None, "-vv", [4, 5], [0, 0], marks=pytest.mark.paranoid),
-        pytest.param(
-            None, "-vvv", [6, MAXLOG], [0, MAXLOG], marks=pytest.mark.paranoid
-        ),
+        pytest.param(None, "-vvv", [6, MAXLOG], [0, MAXLOG], marks=pytest.mark.paranoid),
         pytest.param("-v", "", [1, 2], [0, 0], marks=pytest.mark.paranoid),
         pytest.param(None, "-v", [1, 2], [0, 0], marks=pytest.mark.paranoid),
         pytest.param(None, "-vv", [4, 5], [0, 0], marks=pytest.mark.paranoid),
-        pytest.param(
-            None, "-vvv", [6, MAXLOG], [0, MAXLOG], marks=pytest.mark.paranoid
-        ),
+        pytest.param(None, "-vvv", [6, MAXLOG], [0, MAXLOG], marks=pytest.mark.paranoid),
         ("-v", "--add-hash 1", [1, 2], [0, 0]),
         (None, "--add-hash 2", [1, 2], [0, 0]),
         pytest.param(None, "--add-hash 3", [1, 2], [0, 0], marks=pytest.mark.paranoid),

@@ -64,9 +64,7 @@ def compose(*decorators):
 
 
 def unquote(v):
-    if (v.startswith('"') and v.endswith('"')) or (
-        v.startswith("'") and v.endswith("'")
-    ):
+    if (v.startswith('"') and v.endswith('"')) or (v.startswith("'") and v.endswith("'")):
         return v[1:-1]
     return v
 
@@ -84,9 +82,7 @@ class FortranMagics(Magics):
         ),
         magic_arguments.argument("--f90flags", help="Specify F90 compiler flags"),
         magic_arguments.argument("--f77flags", help="Specify F77 compiler flags"),
-        magic_arguments.argument(
-            "--debug", action="store_true", help="Compile with debugging information"
-        ),
+        magic_arguments.argument("--debug", action="store_true", help="Compile with debugging information"),
         magic_arguments.argument(
             "--link",
             action="append",
@@ -117,9 +113,7 @@ class FortranMagics(Magics):
         """Create random cache directory."""
 
         while True:
-            cdir = os.path.join(
-                get_ipython_cache_dir(), "fortranmagic", "%08x" % random.getrandbits(32)
-            )
+            cdir = os.path.join(get_ipython_cache_dir(), "fortranmagic", "%08x" % random.getrandbits(32))
             try:
                 os.makedirs(cdir)
                 break
@@ -155,9 +149,7 @@ class FortranMagics(Magics):
                 self._cache_init()
 
     def _cache_clean(self):
-        shutil.rmtree(
-            os.path.join(get_ipython_cache_dir(), "fortranmagic"), ignore_errors=True
-        )
+        shutil.rmtree(os.path.join(get_ipython_cache_dir(), "fortranmagic"), ignore_errors=True)
         self._cache_init()
 
     def __init__(self, shell):
@@ -174,10 +166,7 @@ class FortranMagics(Magics):
                 self.shell.push({k: v})
                 imported.append(k)
         if verbosity > 0 and imported:
-            print(
-                "\nOk. The following fortran objects "
-                "are ready to use: %s" % ", ".join(imported)
-            )
+            print("\nOk. The following fortran objects are ready to use: %s" % ", ".join(imported))
 
     def _run_f2py(self, argv, show_captured=False, verbosity=0, fflags=None):
         """
@@ -261,9 +250,7 @@ class FortranMagics(Magics):
         action="store_true",
         help="Delete custom configuration and back to default",
     )
-    @magic_arguments.argument(
-        "--clean-cache", action="store_true", help="Clean fortran modules build cache"
-    )
+    @magic_arguments.argument("--clean-cache", action="store_true", help="Clean fortran modules build cache")
     @line_magic
     def fortran_config(self, line):
         """
@@ -349,11 +336,7 @@ class FortranMagics(Magics):
         # boolean flags
         f2py_args = ["--%s" % k for k, v in vars(args).items() if v is True]
 
-        kw = [
-            "--%s=%s" % (k, v)
-            for k, v in vars(args).items()
-            if isinstance(v, str) and k not in ("f77flags", "f90flags")
-        ]
+        kw = ["--%s=%s" % (k, v) for k, v in vars(args).items() if isinstance(v, str) and k not in ("f77flags", "f90flags")]
 
         f2py_args.extend(kw)
 
@@ -382,9 +365,7 @@ class FortranMagics(Magics):
             f2py2e.f2py_version,
         )
 
-        module_name = (
-            "_fortran_magic_" + hashlib.md5(str(key).encode("utf-8")).hexdigest()
-        )
+        module_name = "_fortran_magic_" + hashlib.md5(str(key).encode("utf-8")).hexdigest()
 
         if module_name in sys.modules:
             module = sys.modules[module_name]
@@ -406,8 +387,7 @@ class FortranMagics(Magics):
                 # TODO: f2py used requiresf90wrapper()
                 print(
                     "Warning: ambiguity, both f77flags and f90flags "
-                    "are set, assume the %s module"
-                    % ("f77" if fflags == args.f77flags else "f90"),
+                    "are set, assume the %s module" % ("f77" if fflags == args.f77flags else "f90"),
                     file=sys.stderr,
                 )
             lfflags = unquote(fflags).split() if fflags is not None else []

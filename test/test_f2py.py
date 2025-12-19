@@ -31,9 +31,7 @@ def test_f2py_compile_fsource(capfd, numpy_correct_compilers):
       flush(unit=output_unit)  ! GNU extension: call flush() / flush(unit=6)
       end
     """
-    assert 0 == numpy.f2py.compile(
-        fsource, modulename=mod, verbose=0, extra_args=numpy_correct_compilers
-    )
+    assert 0 == numpy.f2py.compile(fsource, modulename=mod, verbose=0, extra_args=numpy_correct_compilers)
 
     import hello
 
@@ -55,8 +53,7 @@ def test_f2py_command(numpy_correct_compilers):
     tdir = "test"
     mod = "fib1"
     ret = subprocess.check_call(
-        [sys.executable, "-m", "numpy.f2py", "-c", tdir + "/" + mod + ".f", "-m", mod]
-        + numpy_correct_compilers
+        [sys.executable, "-m", "numpy.f2py", "-c", tdir + "/" + mod + ".f", "-m", mod] + numpy_correct_compilers
     )
     assert 0 == ret
 

@@ -47,9 +47,7 @@ def test_ipython_cells():
         else:
             pytest.fail("\n" + cs)
         if "Out" in c:
-            np.testing.assert_allclose(
-                float("\n".join(cells[-1]["Out"])), float(er.result)
-            )
+            np.testing.assert_allclose(float("\n".join(cells[-1]["Out"])), float(er.result))
             checked += 1
 
     assert success > 0 and checked > 0

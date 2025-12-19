@@ -27,9 +27,7 @@ _FORTRAN_COMPILERS = (
     "ifx",
     "g95",
 )
-_FORTRAN_COMPILER = next(
-    (compiler for compiler in _FORTRAN_COMPILERS if shutil.which(compiler)), None
-)
+_FORTRAN_COMPILER = next((compiler for compiler in _FORTRAN_COMPILERS if shutil.which(compiler)), None)
 _PKG_CONFIG = shutil.which("pkg-config")
 
 
@@ -50,12 +48,8 @@ def pytest_configure(config):
     _VERBOSE = config.getoption("verbose")
 
     sys.path.insert(0, os.getcwd())
-    config.addinivalue_line(
-        "markers", "requires_fortran: requires a working Fortran compiler"
-    )
-    config.addinivalue_line(
-        "markers", "requires_blas: requires pkg-config BLAS/LAPACK entries"
-    )
+    config.addinivalue_line("markers", "requires_fortran: requires a working Fortran compiler")
+    config.addinivalue_line("markers", "requires_blas: requires pkg-config BLAS/LAPACK entries")
 
 
 def pytest_collection_modifyitems(config, items):

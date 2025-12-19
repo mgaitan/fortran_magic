@@ -47,6 +47,7 @@ dev = [
   "nbformat",
   "ninja",
   "pytest",
+  "ruff",
   "tomli; python_version < '3.11'",
   "cmake",
   "coverage",
@@ -76,3 +77,9 @@ markers = [
   "slow: don't test cells with tags 'slow'",
   "paranoid: logically redundant tests, use `pytest -m ''`",
 ]
+
+[tool.ruff]
+line-length = 127
+
+[tool.ruff.lint]
+per-file-ignores = { "documentation.ipynb" = ["F821"] }

@@ -45,9 +45,7 @@ def _get_stags(meta):
 
 def _check_sxf(sxf, stags):
     for t in stags:
-        if t == sxf or (
-            t.startswith(sxf + "_") and sys.platform.startswith(t[len(sxf) + 1 :])
-        ):
+        if t == sxf or (t.startswith(sxf + "_") and sys.platform.startswith(t[len(sxf) + 1 :])):
             return True
     return False
 
@@ -65,35 +63,21 @@ class SkipExecutePreprocessor(ExecutePreprocessor):
         if not (stags & self._tags) or _check_sxf("skip", stags):
             if self._verbose >= 1:
                 warnings.warn(
-                    Warning(
-                        "SkipExecutePreprocessor: "
-                        "skip cell id: "
-                        + cell.id
-                        + "\n"
-                        + cell.get("source", "")
-                        + "\n========"
-                    )
+                    Warning("SkipExecutePreprocessor: skip cell id: " + cell.id + "\n" + cell.get("source", "") + "\n========")
                 )
             rcell, rresources = cell.copy(), resources
         else:
             if self._verbose >= 2:
                 warnings.warn(
                     Warning(
-                        "SkipExecutePreprocessor: "
-                        "execute cell id: "
-                        + cell.id
-                        + "\n"
-                        + cell.get("source", "")
-                        + "\n========"
+                        "SkipExecutePreprocessor: execute cell id: " + cell.id + "\n" + cell.get("source", "") + "\n========"
                     )
                 )
             allow_errors = self.allow_errors
             try:
                 if _check_sxf("xfail", stags):
                     self.allow_errors = True
-                rcell, rresources = super(
-                    SkipExecutePreprocessor, self
-                ).preprocess_cell(cell, resources, index)
+                rcell, rresources = super(SkipExecutePreprocessor, self).preprocess_cell(cell, resources, index)
             finally:
                 self.allow_errors = allow_errors
         return rcell, rresources
@@ -116,15 +100,9 @@ def documentation_testing_engine(tags, verbose):
 
     test_documentation.cells.insert(
         0,
-        nbformat.v4.new_code_cell(
-            "import coverage as _tdi_coverage\n"
-            "_tdi_cov = _tdi_coverage.Coverage()\n"
-            "_tdi_cov.start()\n"
-        ),
+        nbformat.v4.new_code_cell("import coverage as _tdi_coverage\n_tdi_cov = _tdi_coverage.Coverage()\n_tdi_cov.start()\n"),
     )
-    test_documentation.cells.append(
-        nbformat.v4.new_code_cell("_tdi_cov.stop()\n_tdi_cov.save()\n")
-    )
+    test_documentation.cells.append(nbformat.v4.new_code_cell("_tdi_cov.stop()\n_tdi_cov.save()\n"))
 
     for t in test_documentation.cells:
         if t.cell_type == "code":
@@ -159,9 +137,7 @@ def documentation_testing_engine(tags, verbose):
         os.environ["JUPYTER_PATH"] = env["JUPYTER_PATH"]
         km, _ = start_new_kernel(kernel_name="fortranmagic", env=env)
         try:
-            exec_documentation, _ = ep.preprocess(
-                copy.deepcopy(test_documentation), km=km
-            )
+            exec_documentation, _ = ep.preprocess(copy.deepcopy(test_documentation), km=km)
         finally:
             km.shutdown_kernel(now=True)
             if old_jupyter_path is None:
@@ -175,11 +151,7 @@ def documentation_testing_engine(tags, verbose):
     for t, e in zip(test_documentation.cells, exec_documentation.cells):
         stags = _get_stags(t.metadata)
         if stags - DTA_TAGS:
-            warnings.warn(
-                Warning(
-                    "Test documentation.ipynb unknown tags: " + str(stags - DTA_TAGS)
-                )
-            )
+            warnings.warn(Warning("Test documentation.ipynb unknown tags: " + str(stags - DTA_TAGS)))
         if any(o.output_type == "error" for o in e.get("outputs", [])):
             if _check_sxf("xfail", stags):
                 xfail_cells += 1
