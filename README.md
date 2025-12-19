@@ -1,9 +1,10 @@
 # Fortran magic
 
 [![PyPI](https://img.shields.io/pypi/v/fortran-magic)](https://pypi.python.org/pypi/fortran-magic)
+[![CI](https://github.com/mgaitan/fortran_magic/actions/workflows/micromamba.yml/badge.svg)](https://github.com/mgaitan/fortran_magic/actions/workflows/micromamba.yml)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/fortran-magic)](https://pypi.python.org/pypi/fortran-magic)
 
-Compile and import symbols from a cell with Fortran code, using f2py.
+Compile and import symbols from a cell with Fortran code, using [f2py](https://numpy.org/doc/stable/f2py/).
 
 > **Attention:** I am looking for collaborators to maintain this project. If you are interested,
 > please open an issue (or PRs) with your proposals for improvements and volunteer to be a maintainer.
@@ -18,7 +19,13 @@ the user's namespace.
 
 ## Install
 
-You can install or upgrade via pip:
+You can install or upgrade via `uv`:
+
+```text
+uv add fortran-magic
+```
+
+Or via pip:
 
 ```text
 pip install -U fortran-magic
