@@ -1,13 +1,9 @@
 ---
-# vim:set sw=2 ts=8 et fileencoding=utf8:
-# SPDX-License-Identifier: BSD-3-Clause
-# Copyright © 2023, Serguei E. Leontiev (leo@sai.msu.ru)
-#
 channels:
   - conda-forge
   - defaults
 dependencies:
-  # setup.py of fortranmagic.py dependencies:
+  # Project dependencies:
   - ipython
   - numpy
   # - charset-normalizer  # only: python=3
@@ -17,6 +13,11 @@ dependencies:
   - yamllint
   - pytest
   - pytest-cov
+  - uv
+  - meson
+  - ninja
+  - cmake
+  - pkg-config
   - nbconvert
   - nbformat
   - ipykernel

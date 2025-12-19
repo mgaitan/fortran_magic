@@ -1,7 +1,3 @@
-# vim:set sw=4 ts=8 fileencoding=utf-8:
-# SPDX-License-Identifier: BSD-3-Clause
-# Copyright © 2023, Serguei E. Leontiev (leo@sai.msu.ru)
-#
 """
 Checking flags of `%fortran_config` and `%%fortran`.
 
@@ -18,10 +14,10 @@ import IPython.core.interactiveshell as ici
 import IPython.paths
 import pytest
 
-_USE_MESON = (sys.version_info >= (3, 12))
+pytestmark = pytest.mark.requires_fortran
 
 # For slightly faster compilations.
-FORTRAN = "%%fortran --noopt  --f90flags '-O0' "
+FORTRAN = "%%fortran --f90flags '-O0' "
 
 GOOD_PRG = """
 subroutine hj(x)
@@ -88,15 +84,13 @@ class Cish(object):
         """Compile and check patterns in stdout/stderr."""
 
         for vf in vrngs:
-            _, o, e = self.chk_run(FORTRAN + vf['a'] + "\n" + GOOD_PRG)
-            for p in vf['ps']:
-                assert (o.count(p['p']) >= p['o'][0] and
-                        o.count(p['p']) <= p['o'][1]), o
-                assert (e.count(p['p']) >= p['e'][0] and
-                        e.count(p['p']) <= p['e'][1]), e
+            _, o, e = self.chk_run(FORTRAN + vf["a"] + "\n" + GOOD_PRG)
+            for p in vf["ps"]:
+                assert o.count(p["p"]) >= p["o"][0] and o.count(p["p"]) <= p["o"][1], o
+                assert e.count(p["p"]) >= p["e"][0] and e.count(p["p"]) <= p["e"][1], e
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def ish(numpy_correct_compilers, verbose):
     """Fixture for IPython interactive shell and test configuration."""
 
@@ -113,7 +107,7 @@ class CtxIsh(Cish):
         self.cap = capfd
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def ctxish(capfd, ish):
     """Fixture for context of capture and IPython interactive shell."""
 
@@ -126,37 +120,29 @@ MAXLOG = 10**9
 @pytest.mark.slow
 @pytest.mark.usefixtures("use_fortran_config")
 @pytest.mark.parametrize(
-    "f_config_arg, fortran_arg, outrange, errrange", [
+    "f_config_arg, fortran_arg, outrange, errrange",
+    [
         ("", "", [0, 0], [0, 0]),
         (None, "-v", [1, 2], [0, 0]),
         (None, "-vv", [4, 5], [0, 0]),
         (None, "-vvv", [6, MAXLOG], [0, MAXLOG]),
         ("-v -v", "", [4, 5], [0, 0]),
         (None, "-v", [1, 2], [0, 0]),
+        pytest.param(None, "-vv", [4, 5], [0, 0], marks=pytest.mark.paranoid),
         pytest.param(
-            None, "-vv", [4, 5], [0, 0],
-            marks=pytest.mark.paranoid),
+            None, "-vvv", [6, MAXLOG], [0, MAXLOG], marks=pytest.mark.paranoid
+        ),
+        pytest.param("-v", "", [1, 2], [0, 0], marks=pytest.mark.paranoid),
+        pytest.param(None, "-v", [1, 2], [0, 0], marks=pytest.mark.paranoid),
+        pytest.param(None, "-vv", [4, 5], [0, 0], marks=pytest.mark.paranoid),
         pytest.param(
-            None, "-vvv", [6, MAXLOG], [0, MAXLOG],
-            marks=pytest.mark.paranoid),
-        pytest.param(
-            "-v", "", [1, 2], [0, 0],
-            marks=pytest.mark.paranoid),
-        pytest.param(
-            None, "-v", [1, 2], [0, 0],
-            marks=pytest.mark.paranoid),
-        pytest.param(
-            None, "-vv", [4, 5], [0, 0],
-            marks=pytest.mark.paranoid),
-        pytest.param(
-            None, "-vvv", [6, MAXLOG], [0, MAXLOG],
-            marks=pytest.mark.paranoid),
+            None, "-vvv", [6, MAXLOG], [0, MAXLOG], marks=pytest.mark.paranoid
+        ),
         ("-v", "--add-hash 1", [1, 2], [0, 0]),
         (None, "--add-hash 2", [1, 2], [0, 0]),
-        pytest.param(
-            None, "--add-hash 3", [1, 2], [0, 0],
-            marks=pytest.mark.paranoid),
-        ])
+        pytest.param(None, "--add-hash 3", [1, 2], [0, 0], marks=pytest.mark.paranoid),
+    ],
+)
 def test_v(ctxish, f_config_arg, fortran_arg, outrange, errrange):
     """
     1. There should be no output without the `-v` flag, if there are no
@@ -174,9 +160,11 @@ def test_v(ctxish, f_config_arg, fortran_arg, outrange, errrange):
     5. Verbosity level setted by `%fortran_config` must be constant.
     """
     ctxish.f_config(f_config_arg)
-    ctxish.check_pattern([
-        {'a': fortran_arg, 'ps': [{'p': "\n", 'o': outrange, 'e': errrange}]},
-        ])
+    ctxish.check_pattern(
+        [
+            {"a": fortran_arg, "ps": [{"p": "\n", "o": outrange, "e": errrange}]},
+        ]
+    )
 
 
 @pytest.mark.fast
@@ -185,7 +173,7 @@ def test_intermediate_rm_rf_ipython_fortran():
     rm -r {get_ipython_cache_dir()}/fortranmagic
     """
 
-    fm = 'fortranmagic'
+    fm = "fortranmagic"
     lib_dir = os.path.join(IPython.paths.get_ipython_cache_dir(), fm)
     if os.path.exists(lib_dir):
         shutil.rmtree(lib_dir, ignore_errors=True)
@@ -193,46 +181,32 @@ def test_intermediate_rm_rf_ipython_fortran():
 
 @pytest.mark.fast
 @pytest.mark.usefixtures("use_fortran_config")
-def test_fcompiler_priority(ctxish):
-    """
-    `%%fortran` `--fcompile`/`--compile` flags must redefined
-    `%fortran_config` flags.
-    """
-
-    ctxish.f_config("--fcompiler=g95")
-    ctxish.check_pattern([
-        {'a': "-vv --fcompiler=gnu95",
-         'ps': [
-            {'p': "--fcompiler=g95",   'o': [0, 0], 'e': [0, 0]},
-            {'p': "--fcompiler=gnu95", 'o': [1, 1], 'e': [0, 0]},
-            ]}])
-
-
-@pytest.mark.fast
-@pytest.mark.usefixtures("use_fortran_config")
 def test_syntax_error(ctxish, numpy_correct_compilers):
     """Check `stderr` output by fortran syntax error."""
 
-    f_config = " ".join(numpy_correct_compilers) if numpy_correct_compilers \
-               else "--defaults"
-    ctxish.f_config(f_config)
+    ctxish.f_config("--defaults")
     r, o, e = ctxish.uck_run(FORTRAN + "\n" + BUG_PRG)
     assert not r.success, str(r)
-    assert o.count('\n') >= 6, o
-    assert e.count('\n') >= 1, e
+    assert o.count("\n") >= 6, o
+    assert e.count("\n") >= 1, e
 
 
 @pytest.mark.usefixtures("use_fortran_config")
 @pytest.mark.parametrize(
-    "f_config_arg, fortran_arg", [
-        ("--extra '-DNPY_NO_DEPRECATED_API=0' --link lapack",
-         "--extra '-DNPY_NO_DEPRECATED_API=0' --link blas"),
+    "f_config_arg, fortran_arg",
+    [
+        (
+            "--extra '-DNPY_NO_DEPRECATED_API=0' --link lapack",
+            "--extra '-DNPY_NO_DEPRECATED_API=0' --link blas",
+        ),
         pytest.param(
-         None,
-         "--extra '-DNPY_NO_DEPRECATED_API=0' --link blas",
-         marks=pytest.mark.xfail if sys.platform.startswith("win32")
-         else []),
-        ])
+            None,
+            "--extra '-DNPY_NO_DEPRECATED_API=0' --link blas",
+            marks=pytest.mark.xfail if sys.platform.startswith("win32") else [],
+        ),
+    ],
+)
+@pytest.mark.requires_blas
 def test_link_extra(ctxish, f_config_arg, fortran_arg):
     """
     `--extra` and `--link` flags from `%fortran_config` and
@@ -243,12 +217,15 @@ def test_link_extra(ctxish, f_config_arg, fortran_arg):
 
     ctxish.f_config(f_config_arg)
     ctxish.f_config("--clean-cache")
-    ctxish.check_pattern([
-        {'a': "-vv " + fortran_arg,
-         'ps': [
-            {'p': "-DNPY_NO_DEPRECATED_API=0", 'o': [2, 2], 'e': [0, 0]},
-            {'p': "--dep lapack" if _USE_MESON else "--link-lapack",
-             'o': [1, 1], 'e': [0, 0]},
-            {'p': "--dep blas" if _USE_MESON else "--link-blas",
-             'o': [1, 1], 'e': [0, 0]},
-            ]}])
+    ctxish.check_pattern(
+        [
+            {
+                "a": "-vv " + fortran_arg,
+                "ps": [
+                    {"p": "-DNPY_NO_DEPRECATED_API=0", "o": [2, 2], "e": [0, 0]},
+                    {"p": "--dep lapack", "o": [1, 1], "e": [0, 0]},
+                    {"p": "--dep blas", "o": [1, 1], "e": [0, 0]},
+                ],
+            }
+        ]
+    )

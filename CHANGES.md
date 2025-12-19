@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0 / 2025-12-19
+
+- Switch packaging to `pyproject.toml` with Hatchling and embed pytest config.
+- Drop legacy distutils backend and require Meson for f2py builds.
+- Support Python 3.10 through 3.14.
+- Convert README and changelog to Markdown.
+- Update release automation to build/publish with `uv`.
+
 ## 0.9 / 2024-05-27
 
 - Fix for NumPy 1.26 & Python 3.12. Warning: When using the Meson build

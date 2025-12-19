@@ -1,7 +1,3 @@
-# vim:set sw=4 ts=8 fileencoding=utf-8:
-# SPDX-License-Identifier: BSD-3-Clause
-# Copyright © 2023, Serguei E. Leontiev (leo@sai.msu.ru)
-#
 """Test README.md"""
 
 import re
@@ -9,6 +5,8 @@ import re
 import IPython.core.interactiveshell as ici
 import numpy as np
 import pytest
+
+pytestmark = pytest.mark.requires_fortran
 
 
 @pytest.mark.usefixtures("use_fortran_config")

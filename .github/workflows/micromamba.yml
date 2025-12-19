@@ -1,8 +1,4 @@
 ---
-# vim:set sw=2 ts=8 et fileencoding=utf8:
-# SPDX-License-Identifier: BSD-3-Clause
-# Copyright © 2023, Serguei E. Leontiev (leo@sai.msu.ru)
-#
 name: micromamba/jupyter application
 
 on:  # yamllint disable-line rule:truthy
@@ -14,17 +10,11 @@ on:  # yamllint disable-line rule:truthy
 
 jobs:
   build:
-
     strategy:
       fail-fast: true
       matrix:
         os: ["macos", "ubuntu", "windows"]
-        python-version: ["3", "3.11", "2"]
-        exclude:
-          # GitHub Action micromamba can't solve "python 2"
-          # on macOS 10.14.4
-          - os: "macos"
-            python-version: "2"
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
         include:
           - os: "macos"
             platform: "darwin"
@@ -32,29 +22,13 @@ jobs:
 
           - os: "ubuntu"
             platform: "linux"
+            os_pkgs: ""
 
           - os: "windows"
             platform: "win32"
             os_pkgs: "m2w64-gcc-fortran"
 
-          - python-version: "2"
-            py_spec: "python=2"
-            py_pkgs: "typing"
-            numpy_meson: false
-
-          - python-version: "3.11"
-            py_spec: "python=3.11"
-            py_pkgs: "charset-normalizer \
-              "  # conda-forge/label/numpy_rc::_numpy_rc"
-            numpy_meson: false
-
-          - python-version: "3"
-            py_spec: "python=3"
-            py_pkgs: "charset-normalizer meson ninja cmake pkgconfig \
-              "  # conda-forge/label/numpy_rc::_numpy_rc"
-            numpy_meson: true
-
-    name: ${{ matrix.platform }} ${{ matrix.py_spec }}
+    name: ${{ matrix.platform }} py${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}-latest
     defaults:
       run:
@@ -74,13 +48,13 @@ jobs:
           init-shell: bash
           environment-name: test-env
           environment-file: test/base-environment.yml
-          create-args:
-            ${{ matrix.py_spec }} ${{ matrix.py_pkgs }} ${{ matrix.os_pkgs }}
+          create-args: >-
+            python=${{ matrix.python-version }} ${{ matrix.os_pkgs }}
           cache-environment-key: >-
-            environment-${{ matrix.py_spec }}-
+            environment-${{ matrix.python-version }}-
             ${{ steps.date.outputs.date }}-${{ env.CACHE_NUMBER }}
           cache-downloads-key: >-
-            downloads-${{ matrix.py_spec }}-
+            downloads-${{ matrix.python-version }}-
             ${{ steps.date.outputs.date }}-${{ env.CACHE_NUMBER }}
 
       - name: Lint with flake8 & ymllint
@@ -92,19 +66,13 @@ jobs:
           fi
           flake8 . --count --max-line-length=127 --statistics
 
-      - name: Correct environment variable conda for f2py
-        if: ${{ matrix.platform == 'darwin' && matrix.py_spec == 'python=2' }}
-        run: |
-          echo LDFLAGS="-shared $(python-config --ldflags)" >> "$GITHUB_ENV"
-
       - name: Workaround conda pkg-config for win32 f2py
-        if: ${{ matrix.platform == 'win32' && matrix.numpy_meson }}
+        if: ${{ matrix.platform == 'win32' }}
         run: |
           cp -n "$CONDA_PREFIX/Library/lib/pkgconfig"/{mkl-sdl,lapack}.pc
           cp -n "$CONDA_PREFIX/Library/lib/pkgconfig"/{mkl-sdl,blas}.pc
 
       - name: f2py workaround  # https://github.com/numpy/numpy/issues/26107
-        if: ${{ matrix.numpy_meson }}
         run: |
           npv=`python -m numpy.f2py -v`
           if [ "$npv" "<" "2" ]; then
@@ -132,52 +100,16 @@ jobs:
           echo "f2py:   " ; python -m numpy.f2py -v
           echo "pytest: " ; python -m pytest --version
           echo "ipython:" ; ipython --version
-          if "${{ matrix.numpy_meson }}"; then
-            echo "meson:     " ; meson -v
-            echo "ninja:     " ; ninja --version
-            cmake --version
-            echo "pkg-config:" ; pkg-config --version
+          echo "meson:     " ; meson -v
+          echo "ninja:     " ; ninja --version
+          cmake --version
+          echo "pkg-config:" ; pkg-config --version
 
-            pkg-config --list-all
-          fi
+          pkg-config --list-all
 
-          if [ "${{ matrix.platform }}" != "win32" ]; then
-            nmpcor=""
-          else
-            "${{ matrix.numpy_meson }}" || {
-              # https://github.com/numpy/numpy/issues/16416
-              # https://github.com/numpy/numpy/pull/20311/files
-              nmpcor="--fcompiler=gnu95 --compiler=mingw32"
-            }
+          ld_lapack="--dep lapack"
 
-            nmpdusc="$CONDA_PREFIX/Lib/site-packages/numpy/distutils/site.cfg"
-            if [ -f "$nmpdusc" ]; then
-              sed -e '/^ *library_dirs *= *\(.*\)lib$/s//&;\1bin/' \
-                -i -- "$nmpdusc"
-              head "$nmpdusc"
-              printf "%s: patched\n" "$nmpdusc" 1>&2
-            elif [ -d `dirname "$nmpdusc"` ]; then
-              base="$CONDA_PREFIX/Library"
-              echo "
-                [DEFAULT]
-                library_dirs = $base/lib;$base/bin
-                include_dirs = $base/include
-                libraries = blas,cblas,lapack
-                " | sed 's/^[[:space:]]*//' > "$nmpdusc"
-              head "$nmpdusc"
-              printf "%s: Don't exist\n" "$nmpdusc" 1>&2
-            else
-              printf "%s: Directory don't exist\n" "$nmpdusc" 1>&2
-            fi
-          fi
-
-          if "${{ matrix.numpy_meson }}"; then
-            ld_lapack="--dep lapack"
-          else
-            ld_lapack="--link-lapack"
-          fi
-
-          python -m numpy.f2py --verbose ${nmpcor} -c test/fib1.f -m fib1
+          python -m numpy.f2py --verbose -c test/fib1.f -m fib1
           python -c 'if 1:
             import fib1
             import numpy as np
@@ -190,7 +122,7 @@ jobs:
           python -m numpy.f2py --verbose --help-link blas
           python -m numpy.f2py --verbose --help-link lapack
 
-          python -m numpy.f2py --verbose ${nmpcor} \
+          python -m numpy.f2py --verbose \
             -c test/solve.f90 -m solve $ld_lapack
           python -c 'if 1:
             from solve import solve
@@ -205,5 +137,5 @@ jobs:
 
       - name: Test with pytest
         run: |
-          JUPYTER_PLATFORM_DIRS=1 bash test/install_and_test.sh
+          JUPYTER_PLATFORM_DIRS=1 uv run --group dev pytest
 ...

@@ -1,8 +1,3 @@
-! vim:set sw=4 ts=8 fileencoding=ascii:
-! SPDX-License-Identifier: BSD-3-Clause
-! Copyright (c) 2013, Martin Gaitan
-! Copyright (c) 2024, Serguei E. Leontiev (leo@sai.msu.ru)
-!
 ! FILE: solve.f90
 subroutine solve(A, b, x, n)
     ! solve the matrix equation A*x=b using LAPACK

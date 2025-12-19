@@ -7,7 +7,7 @@ name = "fortran-magic"
 dynamic = ["version"]
 description = "An extension for IPython that help to use Fortran in your interactive session."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.15"
 license = { file = "LICENSE" }
 authors = [
   { name = "Martin Gaitan", email = "gaitan@gmail.com" },
@@ -26,6 +26,8 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Programming Language :: Fortran",
   "Topic :: Software Development :: Libraries :: Python Modules",
   "Topic :: Scientific/Engineering",
@@ -38,8 +40,16 @@ Changelog = "https://github.com/mgaitan/fortran_magic/blob/master/CHANGES.md"
 
 [dependency-groups]
 dev = [
+  "jupyter-client",
+  "ipykernel",
+  "meson",
+  "nbconvert",
+  "nbformat",
+  "ninja",
   "pytest",
   "tomli; python_version < '3.11'",
+  "cmake",
+  "coverage",
 ]
 
 [tool.hatch.version]

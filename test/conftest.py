@@ -1,7 +1,3 @@
-# vim:set sw=4 ts=8 fileencoding=utf-8:
-# SPDX-License-Identifier: BSD-3-Clause
-# Copyright © 2023, Serguei E. Leontiev (leo@sai.msu.ru)
-#
 """
 Pytest configuration:
     1. Add `pytest` starting directory for load `fortranmagic.py` and
@@ -11,6 +7,8 @@ Pytest configuration:
 """
 
 import os
+import shutil
+import subprocess
 import sys
 
 import IPython.core.interactiveshell as ici
@@ -18,10 +16,31 @@ import pytest
 
 _VERBOSE = None
 
-if sys.platform.startswith("win"):
-    _NUMPY_CORRECT_COMPILERS = ['--fcompiler=gnu95', '--compiler=mingw32']
-else:
-    _NUMPY_CORRECT_COMPILERS = []
+_NUMPY_CORRECT_COMPILERS = []
+_FORTRAN_COMPILERS = (
+    "gfortran",
+    "flang-new",
+    "flang",
+    "nvfortran",
+    "pgfortran",
+    "ifort",
+    "ifx",
+    "g95",
+)
+_FORTRAN_COMPILER = next(
+    (compiler for compiler in _FORTRAN_COMPILERS if shutil.which(compiler)), None
+)
+_PKG_CONFIG = shutil.which("pkg-config")
+
+
+def _pkg_config_exists(name):
+    if _PKG_CONFIG is None:
+        return False
+    return subprocess.run([_PKG_CONFIG, "--exists", name], check=False).returncode == 0
+
+
+_HAS_BLAS = _pkg_config_exists("blas")
+_HAS_LAPACK = _pkg_config_exists("lapack")
 
 
 def pytest_configure(config):
@@ -31,6 +50,30 @@ def pytest_configure(config):
     _VERBOSE = config.getoption("verbose")
 
     sys.path.insert(0, os.getcwd())
+    config.addinivalue_line(
+        "markers", "requires_fortran: requires a working Fortran compiler"
+    )
+    config.addinivalue_line(
+        "markers", "requires_blas: requires pkg-config BLAS/LAPACK entries"
+    )
+
+
+def pytest_collection_modifyitems(config, items):
+    if _FORTRAN_COMPILER is None:
+        skip = pytest.mark.skip(reason="No Fortran compiler found in PATH")
+        for item in items:
+            if "requires_fortran" in item.keywords:
+                item.add_marker(skip)
+    if not (_HAS_BLAS and _HAS_LAPACK):
+        skip = pytest.mark.skip(reason="BLAS/LAPACK not found via pkg-config")
+        for item in items:
+            if "requires_blas" in item.keywords:
+                item.add_marker(skip)
+
+
+@pytest.fixture(scope="session")
+def has_blas_lapack():
+    return _HAS_BLAS and _HAS_LAPACK
 
 
 @pytest.fixture(scope="session")
@@ -54,8 +97,7 @@ def use_fortran_config():
     Use: @pytest.mark.usefixtures("use_fortran_config")
     """
 
-    f_config = " ".join(_NUMPY_CORRECT_COMPILERS) if _NUMPY_CORRECT_COMPILERS \
-               else "--defaults"
+    f_config = "--defaults"
     ish = ici.InteractiveShell()
     ish.run_cell("%load_ext fortranmagic")
     ish.run_cell("%fortran_config " + f_config)

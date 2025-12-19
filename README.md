@@ -32,14 +32,7 @@ Fortran code in a cell started with the cell magic `%%fortran`. For example:
 ```text
 In[1]: %load_ext fortranmagic
 
-In[2]: import sys
-
-       if sys.platform.startswith("win"):
-           # Depends of system, python builds, and compilers compatibility.
-           # See `documentation.ipynb`.
-           %fortran_config --fcompiler=gnu95 --compiler=mingw32
-
-In[3]: %%fortran
+In[2]: %%fortran
 
        subroutine f1(x, y, z)
             real, intent(in) :: x,y
@@ -54,8 +47,16 @@ Every symbol is automatically imported. So the subroutine `f1` is already availa
 your python session as a function:
 
 ```text
-In[4]:  f1(1.0, 2.1415)
-Out[4]: 9.26574066397734e-05
+In[3]:  f1(1.0, 2.1415)
+Out[3]: 9.26574066397734e-05
+```
+
+## Tests
+
+Run tests with:
+
+```text
+uv run --group dev pytest
 ```
 
 See the documentation for further details.
