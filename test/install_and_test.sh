@@ -27,11 +27,11 @@ clean() {
 trap clean EXIT SIGHUP SIGINT SIGTERM
 clean
 
-python setup.py --quiet install
+python -m pip install .
 
 mkdir -p "$tdir"
-cp -rp CHANGES.rst README.rst \
-    documentation.ipynb pytest.ini setup.py test \
+cp -rp CHANGES.md README.md \
+    documentation.ipynb pyproject.toml test \
     "$tdir"/.
 (cd "$tdir" && \
     python -m pytest "$@" --cov=fortranmagic --capture=fd \

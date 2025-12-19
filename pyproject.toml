@@ -1,0 +1,68 @@
+[build-system]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fortran-magic"
+dynamic = ["version"]
+description = "An extension for IPython that help to use Fortran in your interactive session."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [
+  { name = "Martin Gaitan", email = "gaitan@gmail.com" },
+]
+keywords = ["ipython", "notebook", "fortran", "f2py", "science"]
+dependencies = ["ipython", "numpy"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Web Environment",
+  "Framework :: IPython",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: BSD License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Fortran",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: Scientific/Engineering",
+]
+
+[project.urls]
+Homepage = "https://github.com/mgaitan/fortran_magic"
+Documentation = "http://nbviewer.ipython.org/urls/raw.github.com/mgaitan/fortran_magic/master/documentation.ipynb"
+Changelog = "https://github.com/mgaitan/fortran_magic/blob/master/CHANGES.md"
+
+[dependency-groups]
+dev = [
+  "pytest",
+  "tomli; python_version < '3.11'",
+]
+
+[tool.hatch.version]
+path = "fortranmagic.py"
+
+[tool.hatch.build]
+include = [
+  "fortranmagic.py",
+  "README.md",
+  "CHANGES.md",
+  "LICENSE",
+  "documentation.ipynb",
+  "test/**",
+]
+
+[tool.hatch.build.targets.wheel]
+include = ["fortranmagic.py"]
+
+[tool.pytest.ini_options]
+addopts = "-m \"not paranoid\""
+markers = [
+  "fast: test only cells with tags 'fast'",
+  "medium: test untagged cells and with tags 'fast'",
+  "slow: don't test cells with tags 'slow'",
+  "paranoid: logically redundant tests, use `pytest -m ''`",
+]

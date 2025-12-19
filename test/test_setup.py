@@ -2,16 +2,23 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright © 2023, Serguei E. Leontiev (leo@sai.msu.ru)
 #
-"""Test setup.py"""
+"""Test pyproject.toml"""
 
-import subprocess
-import sys
+from pathlib import Path
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - py3.10 fallback
+    import tomli as tomllib
 
 
-def test_setup_version():
-    """Check versions fortranmagic.py&setup.py"""
+def test_pyproject_version_config():
+    """Check pyproject.toml version configuration"""
 
     import fortranmagic
 
-    assert (fortranmagic.__version__ == subprocess.check_output(
-                [sys.executable, "setup.py", "--version"]).decode().rstrip())
+    data = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
+
+    assert "version" in data["project"]["dynamic"]
+    assert data["tool"]["hatch"]["version"]["path"] == "fortranmagic.py"
+    assert fortranmagic.__version__
