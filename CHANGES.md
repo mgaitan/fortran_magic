@@ -7,6 +7,9 @@
 - Support Python 3.10 through 3.14.
 - Convert README and changelog to Markdown.
 - Update release automation to build/publish with `uv`.
+- Add Ruff tooling and format checks for the codebase.
+- Skip Fortran/BLAS-dependent tests when toolchain deps are missing.
+- Fix README test parser edge case for missing prefixes.
 
 ## 0.9 / 2024-05-27
 

@@ -18,6 +18,7 @@ def test_ipython_cells():
 
     cells = []
     celio = None
+    lpfx = None
     for line in rm.splitlines():
         assert "\t" not in line
         m = re.match(r"^\s*(In|Out)\[(\d+)\]:\s*(.*)$", line)
@@ -30,10 +31,11 @@ def test_ipython_cells():
             cells[-1]["Out"] = [m.group(3)]
             celio = "Out"
             lpfx = len(line) - len(m.group(3))
-        elif celio is not None and (len(line) == 0 or line[:lpfx].isspace()):
+        elif celio is not None and lpfx is not None and (len(line) == 0 or line[:lpfx].isspace()):
             cells[-1][celio].append(line[lpfx:] if len(line) > 0 else line)
         else:
             celio = None
+            lpfx = None
 
     ish = ici.InteractiveShell()
 
