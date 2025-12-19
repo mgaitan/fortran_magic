@@ -41,6 +41,15 @@ _HAS_BLAS = _pkg_config_exists("blas")
 _HAS_LAPACK = _pkg_config_exists("lapack")
 
 
+@pytest.fixture(scope="session", autouse=True)
+def isolate_ipython_dir(tmp_path_factory):
+    ipdir = tmp_path_factory.mktemp("ipython")
+    mp = pytest.MonkeyPatch()
+    mp.setenv("IPYTHONDIR", str(ipdir))
+    yield
+    mp.undo()
+
+
 def pytest_configure(config):
     """Get verbosity level"""
 

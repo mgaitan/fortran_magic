@@ -127,11 +127,15 @@ class FortranMagics(Magics):
 
         try:
             cdir = self.shell.db["fortranmagic_cache"]
-            if os.path.isdir(cdir):
-                self._lib_dir = cdir
-                return
-        except (KeyError, OSError):
-            pass
+        except KeyError:
+            cdir = None
+        if cdir:
+            try:
+                if os.path.isdir(cdir):
+                    self._lib_dir = cdir
+                    return
+            except (TypeError, OSError):
+                pass
         self._cache_init()
 
     def _cache_check(self):
