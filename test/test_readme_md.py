@@ -13,7 +13,7 @@ pytestmark = pytest.mark.requires_fortran
 def test_ipython_cells():
     """Check IPython cells form README.md"""
 
-    with open("README.md", "r") as f:
+    with open("README.md") as f:
         rm = f.read()
 
     cells = []

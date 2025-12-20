@@ -31,7 +31,7 @@ def test_f2py_compile_fsource(capfd, numpy_correct_compilers):
       flush(unit=output_unit)  ! GNU extension: call flush() / flush(unit=6)
       end
     """
-    assert 0 == numpy.f2py.compile(fsource, modulename=mod, verbose=0, extra_args=numpy_correct_compilers)
+    assert numpy.f2py.compile(fsource, modulename=mod, verbose=0, extra_args=numpy_correct_compilers) == 0
 
     import hello
 
@@ -66,7 +66,7 @@ def test_f2py_command(numpy_correct_compilers):
         ]
         + numpy_correct_compilers
     )
-    assert 0 == ret
+    assert ret == 0
 
     import fib1
 

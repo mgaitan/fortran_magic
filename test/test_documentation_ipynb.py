@@ -94,7 +94,7 @@ def documentation_testing_engine(tags, verbose):
     assert not DTE_TESTED, "Bad test_documentation_*() order"
     DTE_TESTED |= tags
 
-    with open("documentation.ipynb", "r") as f:
+    with open("documentation.ipynb") as f:
         test_documentation = nbformat.read(f, nbformat.NO_CONVERT)
         assert len(test_documentation.cells) > 1
 

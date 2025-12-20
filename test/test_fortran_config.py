@@ -31,7 +31,7 @@ end subroutine hj
 """
 
 
-class Cish(object):
+class Cish:
     """IPython interactive shell and test configuration."""
 
     def __init__(self, numpy_correct_compilers=None, verbose=None, src=None):

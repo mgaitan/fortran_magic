@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 =====================
 Fortran 90/f2py magic
@@ -16,7 +15,6 @@ import errno
 import hashlib
 import importlib.machinery
 import importlib.util
-import io
 import os
 import random
 import shutil
@@ -403,11 +401,11 @@ class FortranMagics(Magics):
                     fsuffix = ".f90"
                 else:
                     fflags += flag + " "
-            if fflags and " " == fflags[-1]:
+            if fflags and fflags[-1] == " ":
                 fflags = fflags[:-1]
 
             f_f90_file = os.path.join(self._lib_dir, module_name + fsuffix)
-            with io.open(f_f90_file, "w", encoding="utf-8") as f:
+            with open(f_f90_file, "w", encoding="utf-8") as f:
                 f.write(code)
 
             res = self._run_f2py(

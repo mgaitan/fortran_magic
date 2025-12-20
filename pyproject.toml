@@ -79,8 +79,38 @@ markers = [
   "paranoid: logically redundant tests, use `pytest -m ''`",
 ]
 
+
 [tool.ruff]
-line-length = 127
+line-length = 120
 
 [tool.ruff.lint]
 per-file-ignores = { "documentation.ipynb" = ["F821"] }
+select = [
+    "E",
+    "W",      # pycodestyle (E, W) https://docs.astral.sh/ruff/rules/#pycodestyle-e-w
+    "F",      # https://docs.astral.sh/ruff/rules/#pyflakes-f
+    "I",      # isort
+    "C90",    # https://docs.astral.sh/ruff/rules/#mccabe-c90
+    "A",      # https://docs.astral.sh/ruff/rules/#flake8-builtins-a
+    "ANN",    # https://docs.astral.sh/ruff/rules/#flake8-annotations-ann
+    "UP",     # https://docs.astral.sh/ruff/rules/#pyupgrade-up
+    "RUF",    # https://docs.astral.sh/ruff/rules/#ruff-specific-rules-ruf
+    "T10",    # remove pdbs
+    "ISC",    # https://docs.astral.sh/ruff/rules/#flake8-implicit-str-concat-isc
+    "SIM",    # https://docs.astral.sh/ruff/rules/#flake8-simplify-sim
+    "ASYNC",  # https://docs.astral.sh/ruff/rules/#flake8-async-async
+    "ERA",    # https://docs.astral.sh/ruff/rules/#eradicate-era
+    "TRY",    # https://docs.astral.sh/ruff/rules/#tryceratops-try
+    "BLE",    # https://docs.astral.sh/ruff/rules/#flake8-blind-except-ble
+    "B",      # https://docs.astral.sh/ruff/rules/#flake8-bugbear-b
+    "EXE",    # https://docs.astral.sh/ruff/rules/#flake8-executable-exe
+    "FA",     # https://docs.astral.sh/ruff/rules/#flake8-future-annotations-fa
+    "C4",     # https://docs.astral.sh/ruff/rules/#flake8-comprehensions-c4
+    "N",      # https://docs.astral.sh/ruff/rules/#pep8-naming-n
+    "PIE",    # https://docs.astral.sh/ruff/rules/#flake8-pie-pie
+    "PERF",   # https://docs.astral.sh/ruff/rules/#perflint-perf
+    "PL",     # https://docs.astral.sh/ruff/rules/#pylint-pl
+    "FURB",   # https://docs.astral.sh/ruff/rules/#refurb-furb
+    "RET",    # https://docs.astral.sh/ruff/rules/#flake8-return-ret
+    "TID252", # https://docs.astral.sh/ruff/rules/relative-imports/
+]
