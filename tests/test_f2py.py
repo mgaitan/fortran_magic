@@ -53,7 +53,18 @@ def test_f2py_command(numpy_correct_compilers) -> None:
     tdir = "test"
     mod = "fib1"
     ret = subprocess.check_call(
-        [sys.executable, "-m", "numpy.f2py", "--backend", "meson", "-c", tdir + "/" + mod + ".f", "-m", mod, *numpy_correct_compilers]
+        [
+            sys.executable,
+            "-m",
+            "numpy.f2py",
+            "--backend",
+            "meson",
+            "-c",
+            tdir + "/" + mod + ".f",
+            "-m",
+            mod,
+            *numpy_correct_compilers,
+        ]
     )
     assert ret == 0
 

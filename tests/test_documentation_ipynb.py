@@ -44,7 +44,7 @@ def _get_stags(meta):
 
 
 def _check_sxf(sxf, stags) -> bool:
-    return any(t == sxf or (t.startswith(sxf + "_") and sys.platform.startswith(t[len(sxf) + 1:])) for t in stags)
+    return any(t == sxf or (t.startswith(sxf + "_") and sys.platform.startswith(t[len(sxf) + 1 :])) for t in stags)
 
 
 class SkipExecutePreprocessor(ExecutePreprocessor):
@@ -60,15 +60,27 @@ class SkipExecutePreprocessor(ExecutePreprocessor):
         if not (stags & self._tags) or _check_sxf("skip", stags):
             if self._verbose >= 1:
                 warnings.warn(
-                    Warning("SkipExecutePreprocessor: skip cell id: " + cell.id + "\n" + cell.get("source", "") + "\n========"), stacklevel=2
+                    Warning(
+                        "SkipExecutePreprocessor: skip cell id: "
+                        + cell.id
+                        + "\n"
+                        + cell.get("source", "")
+                        + "\n========"
+                    ),
+                    stacklevel=2,
                 )
             rcell, rresources = cell.copy(), resources
         else:
             if self._verbose >= 2:
                 warnings.warn(
                     Warning(
-                        "SkipExecutePreprocessor: execute cell id: " + cell.id + "\n" + cell.get("source", "") + "\n========"
-                    ), stacklevel=2
+                        "SkipExecutePreprocessor: execute cell id: "
+                        + cell.id
+                        + "\n"
+                        + cell.get("source", "")
+                        + "\n========"
+                    ),
+                    stacklevel=2,
                 )
             allow_errors = self.allow_errors
             try:
@@ -97,7 +109,9 @@ def documentation_testing_engine(tags, verbose) -> None:
 
     test_documentation.cells.insert(
         0,
-        nbformat.v4.new_code_cell("import coverage as _tdi_coverage\n_tdi_cov = _tdi_coverage.Coverage()\n_tdi_cov.start()\n"),
+        nbformat.v4.new_code_cell(
+            "import coverage as _tdi_coverage\n_tdi_cov = _tdi_coverage.Coverage()\n_tdi_cov.start()\n"
+        ),
     )
     test_documentation.cells.append(nbformat.v4.new_code_cell("_tdi_cov.stop()\n_tdi_cov.save()\n"))
 
