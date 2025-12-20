@@ -48,7 +48,7 @@ jobs:
           init-shell: bash
           post-cleanup: none
           environment-name: test-env
-          environment-file: test/base-environment.yml
+          environment-file: tests/base-environment.yml
           create-args: >-
             python=${{ matrix.python-version }} ${{ matrix.os_pkgs }}
           cache-environment: false
