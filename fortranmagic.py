@@ -28,6 +28,7 @@ from IPython.utils.io import capture_output
 from numpy.f2py import f2py2e
 
 __version__ = "1.0"
+_VERBOSITY_DEBUG = 2
 
 
 def _imp_load_dynamic(name, path):
@@ -190,8 +191,6 @@ class FortranMagics(Magics):
         p, out, err = None, None, None
         try:
             with capture_output() as captured:
-                # subprocess.call(command)
-                # Refactor subprocess call to work with jupyterhub
                 try:
                     p = Popen(
                         command,
@@ -208,7 +207,7 @@ class FortranMagics(Magics):
                     raise
                 out, err = p.communicate(input=None)
         finally:
-            if show_captured or verbosity > 2 or p is None or p.returncode:
+            if show_captured or verbosity > _VERBOSITY_DEBUG or p is None or p.returncode:
                 if err:
                     sys.stderr.write(err.decode())
                     sys.stderr.flush()

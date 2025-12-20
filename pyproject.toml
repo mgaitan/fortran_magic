@@ -114,5 +114,6 @@ select = [
     "TID252", # https://docs.astral.sh/ruff/rules/relative-imports/
 ]
 [tool.ruff.lint.per-file-ignores]
-"documentation.ipynb" = ["F821"]
-"tests/*.py" = ["ANN", "PLR2004", "PLC0415"]
+"documentation.ipynb" = ["F821", "PLR2004"]
+"fortranmagic.py" = ["ANN", "C901", "PLR0912", "PLR0915", "TRY003"]
+"tests/*.py" = ["ANN", "C901", "PLR0912", "PLR0915", "PLR2004", "PLC0415", "PLW0603"]

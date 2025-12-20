@@ -173,7 +173,7 @@ def documentation_testing_engine(tags, verbose) -> None:
             xpass_cells += 1
 
     if xfail_cells or xpass_cells:
-        msg = "\nXFAIL_CELLS = %d XPASS_CELLS = %d\n" % (xfail_cells, xpass_cells)
+        msg = f"\nXFAIL_CELLS = {xfail_cells} XPASS_CELLS = {xpass_cells}\n"
         warnings.warn(Warning(msg), stacklevel=2)
         if xfail_cells:
             pytest.xfail(msg)
