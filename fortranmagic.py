@@ -27,7 +27,7 @@ from IPython.paths import get_ipython_cache_dir
 from IPython.utils.io import capture_output
 from numpy.f2py import f2py2e
 
-__version__ = "1.0"
+__version__ = "1.0.0a1"
 _VERBOSITY_DEBUG = 2
 
 
