@@ -7,7 +7,7 @@ pytestmark = pytest.mark.requires_fortran
 
 
 @pytest.mark.usefixtures("use_fortran_config")
-def test_load_ext():
+def test_load_ext() -> None:
     """Check load/reload fortran extension"""
 
     ish = ici.InteractiveShell()

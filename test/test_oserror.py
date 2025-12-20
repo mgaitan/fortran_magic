@@ -18,7 +18,7 @@ end subroutine hj
 
 
 @pytest.mark.usefixtures("use_fortran_config")
-def test_popen_oserror(capfd):
+def test_popen_oserror(capfd) -> None:
     """Test diagnostic of errno.ENOENT"""
 
     ish = ici.InteractiveShell()

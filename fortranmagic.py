@@ -107,11 +107,11 @@ class FortranMagics(Magics):
         ),
     )
 
-    def _cache_init(self):
+    def _cache_init(self) -> None:
         """Create random cache directory."""
 
         while True:
-            cdir = os.path.join(get_ipython_cache_dir(), "fortranmagic", "%08x" % random.getrandbits(32))
+            cdir = os.path.join(get_ipython_cache_dir(), "fortranmagic", f"{random.getrandbits(32):08x}")
             try:
                 os.makedirs(cdir)
                 break
@@ -120,7 +120,7 @@ class FortranMagics(Magics):
         self.shell.db["fortranmagic_cache"] = cdir
         self._lib_dir = cdir
 
-    def _cache_open(self):
+    def _cache_open(self) -> None:
         """Open cache directory on session start"""
 
         try:
@@ -136,7 +136,7 @@ class FortranMagics(Magics):
                 pass
         self._cache_init()
 
-    def _cache_check(self):
+    def _cache_check(self) -> None:
         """Check cache directory.
 
         If the parallel session executed `__cache_init()`, then the
@@ -150,17 +150,17 @@ class FortranMagics(Magics):
             except OSError:
                 self._cache_init()
 
-    def _cache_clean(self):
+    def _cache_clean(self) -> None:
         shutil.rmtree(os.path.join(get_ipython_cache_dir(), "fortranmagic"), ignore_errors=True)
         self._cache_init()
 
-    def __init__(self, shell):
-        super(FortranMagics, self).__init__(shell=shell)
+    def __init__(self, shell) -> None:
+        super().__init__(shell=shell)
         self._reloads = {}
         self._code_cache = {}
         self._cache_open()
 
-    def _import_all(self, module, verbosity=0, code=""):
+    def _import_all(self, module, verbosity=0, code="") -> None:
         imported = []
         for k, v in module.__dict__.items():
             if not k.startswith("__"):
@@ -168,7 +168,7 @@ class FortranMagics(Magics):
                 self.shell.push({k: v})
                 imported.append(k)
         if verbosity > 0 and imported:
-            print("\nOk. The following fortran objects are ready to use: %s" % ", ".join(imported))
+            print("\nOk. The following fortran objects are ready to use: {}".format(", ".join(imported)))
 
     def _run_f2py(self, argv, show_captured=False, verbosity=0, fflags=None):
         """
@@ -185,7 +185,7 @@ class FortranMagics(Magics):
         command += map(str, argv)
 
         if verbosity > 1:
-            print("Running...\n   %s" % " ".join(command))
+            print("Running...\n   {}".format(" ".join(command)))
 
         p, out, err = None, None, None
         try:
@@ -203,7 +203,7 @@ class FortranMagics(Magics):
                     )
                 except OSError as e:
                     if e.errno == errno.ENOENT:
-                        print("Couldn't find program: %r" % command[0])
+                        print(f"Couldn't find program: {command[0]!r}")
                         return -1
                     raise
                 out, err = p.communicate(input=None)
@@ -239,7 +239,7 @@ class FortranMagics(Magics):
                 """,
     )
     @line_magic
-    def f2py_help(self, line):
+    def f2py_help(self, line) -> None:
         args = magic_arguments.parse_argstring(self.f2py_help, line)
         if args.resources:
             self._run_f2py(["--help-link"], True)
@@ -254,7 +254,7 @@ class FortranMagics(Magics):
     )
     @magic_arguments.argument("--clean-cache", action="store_true", help="Clean fortran modules build cache")
     @line_magic
-    def fortran_config(self, line):
+    def fortran_config(self, line) -> None:
         """
         View and handle the custom configuration for %%fortran magic.
 
@@ -290,16 +290,16 @@ class FortranMagics(Magics):
         elif not line:
             try:
                 line = self.shell.db["fortranmagic"]
-                print("Current defaults arguments for %%fortran:\n\t%s" % line)
+                print(f"Current defaults arguments for %fortran:\n\t{line}")
             except KeyError:
                 print("No custom config found for %%fortran")
         else:
             self.shell.db["fortranmagic"] = line
-            print("New default arguments for %%fortran:\n\t%s" % line)
+            print(f"New default arguments for %fortran:\n\t{line}")
 
     @my_magic_arguments
     @cell_magic
-    def fortran(self, line, cell):
+    def fortran(self, line, cell) -> None:
         """Compile and import everything from a Fortran code cell, using f2py.
 
         The content of the cell is written to a `.f90` file in the
@@ -336,9 +336,9 @@ class FortranMagics(Magics):
                 args.verbosity = sverbosity
 
         # boolean flags
-        f2py_args = ["--%s" % k for k, v in vars(args).items() if v is True]
+        f2py_args = [f"--{k}" for k, v in vars(args).items() if v is True]
 
-        kw = ["--%s=%s" % (k, v) for k, v in vars(args).items() if isinstance(v, str) and k not in ("f77flags", "f90flags")]
+        kw = [f"--{k}={v}" for k, v in vars(args).items() if isinstance(v, str) and k not in ("f77flags", "f90flags")]
 
         f2py_args.extend(kw)
 
@@ -381,10 +381,7 @@ class FortranMagics(Magics):
             # `--f77flags` & `--f90flags`. Use `FFLAGS` workaround, see
             # https://github.com/numpy/numpy/issues/24874#issuecomment-1762981664
             # https://github.com/numpy/numpy/issues/24874
-            if args.f77flags is not None:
-                fflags = args.f77flags
-            else:
-                fflags = args.f90flags
+            fflags = args.f77flags if args.f77flags is not None else args.f90flags
             if args.f77flags is not None and args.f90flags is not None:
                 # TODO: f2py used requiresf90wrapper()
                 print(
@@ -409,7 +406,7 @@ class FortranMagics(Magics):
                 f.write(code)
 
             res = self._run_f2py(
-                f2py_args + ["--backend", "meson", "-m", module_name, "-c", f_f90_file],
+                [*f2py_args, "--backend", "meson", "-m", module_name, "-c", f_f90_file],
                 verbosity=args.verbosity,
                 fflags=fflags,
             )
@@ -433,7 +430,7 @@ class FortranMagics(Magics):
 __doc__ = __doc__.format(FORTRAN_DOC=" " * 8 + FortranMagics.fortran.__doc__)
 
 
-def load_ipython_extension(ip):
+def load_ipython_extension(ip) -> None:
     """Load the extension in IPython."""
     ip.register_magics(FortranMagics)
 

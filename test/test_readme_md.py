@@ -10,7 +10,7 @@ pytestmark = pytest.mark.requires_fortran
 
 
 @pytest.mark.usefixtures("use_fortran_config")
-def test_ipython_cells():
+def test_ipython_cells() -> None:
     """Check IPython cells form README.md"""
 
     with open("README.md") as f:

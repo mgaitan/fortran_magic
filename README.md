@@ -19,16 +19,22 @@ the user's namespace.
 
 ## Install
 
-You can install or upgrade via `uv`:
+You can install or upgrade via [uv](https://docs.astral.sh/uv/):
 
-```text
+```bash
 uv add fortran-magic
 ```
 
 Or via pip:
 
-```text
+```bash
 pip install -U fortran-magic
+```
+
+Or run directly
+
+```bash
+uv run --with=fortran-magic ipython
 ```
 
 ## Basic usage

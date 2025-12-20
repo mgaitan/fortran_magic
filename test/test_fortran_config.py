@@ -34,7 +34,7 @@ end subroutine hj
 class Cish:
     """IPython interactive shell and test configuration."""
 
-    def __init__(self, numpy_correct_compilers=None, verbose=None, src=None):
+    def __init__(self, numpy_correct_compilers=None, verbose=None, src=None) -> None:
         if src is not None:
             assert numpy_correct_compilers is None and verbose is None
             self.cap = src.cap
@@ -58,9 +58,9 @@ class Cish:
             return r, "", ""
         c = self.cap.readouterr()
         if self.verbose >= 2:
-            warnings.warn(str(r))
-            warnings.warn(c.out)
-            warnings.warn(c.err)
+            warnings.warn(str(r), stacklevel=2)
+            warnings.warn(c.out, stacklevel=2)
+            warnings.warn(c.err, stacklevel=2)
         return r, c.out, c.err
 
     def chk_run(self, src):
@@ -70,7 +70,7 @@ class Cish:
         assert r.success, "Fail: " + src
         return r, o, e
 
-    def f_config(self, flgs):
+    def f_config(self, flgs) -> None:
         """Call `%fortran_config` and check success."""
 
         if flgs is not None:
@@ -80,7 +80,7 @@ class Cish:
                 flgs = "--defaults"
             self.chk_run("%fortran_config " + flgs)
 
-    def check_pattern(self, vrngs):
+    def check_pattern(self, vrngs) -> None:
         """Compile and check patterns in stdout/stderr."""
 
         for vf in vrngs:
@@ -103,8 +103,8 @@ def ish(numpy_correct_compilers, verbose):
 class CtxIsh(Cish):
     """Context of capture and IPython interactive shell."""
 
-    def __init__(self, cish, capfd):
-        super(CtxIsh, self).__init__(src=cish)
+    def __init__(self, cish, capfd) -> None:
+        super().__init__(src=cish)
         self.cap = capfd
 
 
@@ -140,7 +140,7 @@ MAXLOG = 10**9
         pytest.param(None, "--add-hash 3", [1, 2], [0, 0], marks=pytest.mark.paranoid),
     ],
 )
-def test_v(ctxish, f_config_arg, fortran_arg, outrange, errrange):
+def test_v(ctxish, f_config_arg, fortran_arg, outrange, errrange) -> None:
     """
     1. There should be no output without the `-v` flag, if there are no
     errors;
@@ -165,7 +165,7 @@ def test_v(ctxish, f_config_arg, fortran_arg, outrange, errrange):
 
 
 @pytest.mark.fast
-def test_intermediate_rm_rf_ipython_fortran():
+def test_intermediate_rm_rf_ipython_fortran() -> None:
     """
     rm -r {get_ipython_cache_dir()}/fortranmagic
     """
@@ -178,7 +178,7 @@ def test_intermediate_rm_rf_ipython_fortran():
 
 @pytest.mark.fast
 @pytest.mark.usefixtures("use_fortran_config")
-def test_syntax_error(ctxish, numpy_correct_compilers):
+def test_syntax_error(ctxish, numpy_correct_compilers) -> None:
     """Check `stderr` output by fortran syntax error."""
 
     ctxish.f_config("--defaults")
@@ -204,7 +204,7 @@ def test_syntax_error(ctxish, numpy_correct_compilers):
     ],
 )
 @pytest.mark.requires_blas
-def test_link_extra(ctxish, f_config_arg, fortran_arg):
+def test_link_extra(ctxish, f_config_arg, fortran_arg) -> None:
     """
     `--extra` and `--link` flags from `%fortran_config` and
     `%%fortran` magic must union.

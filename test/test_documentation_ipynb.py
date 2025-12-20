@@ -43,27 +43,24 @@ def _get_stags(meta):
     return stags
 
 
-def _check_sxf(sxf, stags):
-    for t in stags:
-        if t == sxf or (t.startswith(sxf + "_") and sys.platform.startswith(t[len(sxf) + 1 :])):
-            return True
-    return False
+def _check_sxf(sxf, stags) -> bool:
+    return any(t == sxf or (t.startswith(sxf + "_") and sys.platform.startswith(t[len(sxf) + 1:])) for t in stags)
 
 
 class SkipExecutePreprocessor(ExecutePreprocessor):
     """Selecting cells and clearing rejected."""
 
-    def __init__(self, tags=None, verbose=0, **kwargs):
+    def __init__(self, tags=None, verbose=0, **kwargs) -> None:
         self._tags = tags
         self._verbose = verbose
-        super(SkipExecutePreprocessor, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def preprocess_cell(self, cell, resources, index):
         stags = _get_stags(cell.metadata)
         if not (stags & self._tags) or _check_sxf("skip", stags):
             if self._verbose >= 1:
                 warnings.warn(
-                    Warning("SkipExecutePreprocessor: skip cell id: " + cell.id + "\n" + cell.get("source", "") + "\n========")
+                    Warning("SkipExecutePreprocessor: skip cell id: " + cell.id + "\n" + cell.get("source", "") + "\n========"), stacklevel=2
                 )
             rcell, rresources = cell.copy(), resources
         else:
@@ -71,19 +68,19 @@ class SkipExecutePreprocessor(ExecutePreprocessor):
                 warnings.warn(
                     Warning(
                         "SkipExecutePreprocessor: execute cell id: " + cell.id + "\n" + cell.get("source", "") + "\n========"
-                    )
+                    ), stacklevel=2
                 )
             allow_errors = self.allow_errors
             try:
                 if _check_sxf("xfail", stags):
                     self.allow_errors = True
-                rcell, rresources = super(SkipExecutePreprocessor, self).preprocess_cell(cell, resources, index)
+                rcell, rresources = super().preprocess_cell(cell, resources, index)
             finally:
                 self.allow_errors = allow_errors
         return rcell, rresources
 
 
-def documentation_testing_engine(tags, verbose):
+def documentation_testing_engine(tags, verbose) -> None:
     """Calculation & comparison selected subset of cells."""
 
     global DTE_TESTED
@@ -105,9 +102,8 @@ def documentation_testing_engine(tags, verbose):
     test_documentation.cells.append(nbformat.v4.new_code_cell("_tdi_cov.stop()\n_tdi_cov.save()\n"))
 
     for t in test_documentation.cells:
-        if t.cell_type == "code":
-            if "execution" in t.metadata:
-                del t.metadata["execution"]
+        if t.cell_type == "code" and "execution" in t.metadata:
+            del t.metadata["execution"]
 
     ep = SkipExecutePreprocessor(tags=tags, verbose=verbose, timeout=600)
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -148,15 +144,15 @@ def documentation_testing_engine(tags, verbose):
     xfail_cells, xpass_cells = 0, 0
 
     assert len(test_documentation.cells) == len(exec_documentation.cells)
-    for t, e in zip(test_documentation.cells, exec_documentation.cells):
+    for t, e in zip(test_documentation.cells, exec_documentation.cells, strict=False):
         stags = _get_stags(t.metadata)
         if stags - DTA_TAGS:
-            warnings.warn(Warning("Test documentation.ipynb unknown tags: " + str(stags - DTA_TAGS)))
+            warnings.warn(Warning("Test documentation.ipynb unknown tags: " + str(stags - DTA_TAGS)), stacklevel=2)
         if any(o.output_type == "error" for o in e.get("outputs", [])):
             if _check_sxf("xfail", stags):
                 xfail_cells += 1
                 continue
-            assert False, "for cell: " + str(e)
+            raise AssertionError("for cell: " + str(e))
         if DTE_RANDOMS & stags:
             continue
         if _check_sxf("xfail", stags):
@@ -164,14 +160,14 @@ def documentation_testing_engine(tags, verbose):
 
     if xfail_cells or xpass_cells:
         msg = "\nXFAIL_CELLS = %d XPASS_CELLS = %d\n" % (xfail_cells, xpass_cells)
-        warnings.warn(Warning(msg))
+        warnings.warn(Warning(msg), stacklevel=2)
         if xfail_cells:
             pytest.xfail(msg)
 
 
 @pytest.mark.slow
 @pytest.mark.usefixtures("use_fortran_config")
-def test_documentation_slow(verbose):
+def test_documentation_slow(verbose) -> None:
     """
     Default - all cells.
 
@@ -182,7 +178,7 @@ def test_documentation_slow(verbose):
 
 @pytest.mark.medium
 @pytest.mark.usefixtures("use_fortran_config")
-def test_documentation_medium(verbose):
+def test_documentation_medium(verbose) -> None:
     """
     `-m 'not slow'`
 
@@ -194,7 +190,7 @@ def test_documentation_medium(verbose):
 
 @pytest.mark.fast
 @pytest.mark.usefixtures("use_fortran_config")
-def test_documentation_fast(verbose):
+def test_documentation_fast(verbose) -> None:
     """
     `-m fast`
 

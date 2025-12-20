@@ -50,7 +50,7 @@ def isolate_ipython_dir(tmp_path_factory):
     mp.undo()
 
 
-def pytest_configure(config):
+def pytest_configure(config) -> None:
     """Get verbosity level"""
 
     global _VERBOSE
@@ -61,7 +61,7 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "requires_blas: requires pkg-config BLAS/LAPACK entries")
 
 
-def pytest_collection_modifyitems(config, items):
+def pytest_collection_modifyitems(config, items) -> None:
     if _FORTRAN_COMPILER is None:
         skip = pytest.mark.skip(reason="No Fortran compiler found in PATH")
         for item in items:

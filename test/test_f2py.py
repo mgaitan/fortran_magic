@@ -16,7 +16,7 @@ pytestmark = pytest.mark.requires_fortran
 )
 @pytest.mark.skipif(np.__version__ >= "2", reason="NumPy 2.0 remove numpy.f2py.compile")
 @pytest.mark.slow
-def test_f2py_compile_fsource(capfd, numpy_correct_compilers):
+def test_f2py_compile_fsource(capfd, numpy_correct_compilers) -> None:
     """
     Check `numpy.f2py.compile`.
 
@@ -43,7 +43,7 @@ def test_f2py_compile_fsource(capfd, numpy_correct_compilers):
 
 
 @pytest.mark.slow
-def test_f2py_command(numpy_correct_compilers):
+def test_f2py_command(numpy_correct_compilers) -> None:
     """
     Check `numpy.f2py` command line.
 
@@ -53,18 +53,7 @@ def test_f2py_command(numpy_correct_compilers):
     tdir = "test"
     mod = "fib1"
     ret = subprocess.check_call(
-        [
-            sys.executable,
-            "-m",
-            "numpy.f2py",
-            "--backend",
-            "meson",
-            "-c",
-            tdir + "/" + mod + ".f",
-            "-m",
-            mod,
-        ]
-        + numpy_correct_compilers
+        [sys.executable, "-m", "numpy.f2py", "--backend", "meson", "-c", tdir + "/" + mod + ".f", "-m", mod, *numpy_correct_compilers]
     )
     assert ret == 0
 

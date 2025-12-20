@@ -8,7 +8,7 @@ except ModuleNotFoundError:  # pragma: no cover - py3.10 fallback
     import tomli as tomllib
 
 
-def test_pyproject_version_config():
+def test_pyproject_version_config() -> None:
     """Check pyproject.toml version configuration"""
 
     import fortranmagic
