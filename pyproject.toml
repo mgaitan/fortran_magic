@@ -84,7 +84,6 @@ markers = [
 line-length = 120
 
 [tool.ruff.lint]
-per-file-ignores = { "documentation.ipynb" = ["F821"] }
 select = [
     "E",
     "W",      # pycodestyle (E, W) https://docs.astral.sh/ruff/rules/#pycodestyle-e-w
@@ -114,3 +113,6 @@ select = [
     "RET",    # https://docs.astral.sh/ruff/rules/#flake8-return-ret
     "TID252", # https://docs.astral.sh/ruff/rules/relative-imports/
 ]
+[tool.ruff.lint.per-file-ignores]
+"documentation.ipynb" = ["F821"]
+"tests/*.py" = ["ANN", "PLR2004", "PLC0415"]

@@ -13,7 +13,7 @@ def test_load_ext() -> None:
     ish = ici.InteractiveShell()
     tdigits = (
         "%%fortran -vv "
-         """
+        """
 
         integer function test_digits()
             real x
