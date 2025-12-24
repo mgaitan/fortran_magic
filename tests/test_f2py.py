@@ -50,7 +50,7 @@ def test_f2py_command(numpy_correct_compilers) -> None:
     https://numpy.org/doc/stable/f2py/f2py.getting-started.html#
     """
 
-    tdir = "test"
+    tdir = "tests"
     mod = "fib1"
     ret = subprocess.check_call(
         [

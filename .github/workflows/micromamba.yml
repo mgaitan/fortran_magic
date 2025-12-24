@@ -119,7 +119,7 @@ jobs:
 
           ld_lapack="--dep lapack --dep blas"
 
-          python -m numpy.f2py --backend meson --verbose -c test/fib1.f -m fib1
+          python -m numpy.f2py --backend meson --verbose -c tests/fib1.f -m fib1
           python -c 'if 1:
             import fib1
             import numpy as np
@@ -134,7 +134,7 @@ jobs:
 
           if pkg-config --exists blas && pkg-config --exists lapack; then
             python -m numpy.f2py --backend meson --verbose \
-              -c test/solve.f90 -m solve $ld_lapack
+              -c tests/solve.f90 -m solve $ld_lapack
             python -c 'if 1:
               from solve import solve
               import numpy as np
