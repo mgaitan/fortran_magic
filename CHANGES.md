@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0 / 2025-12-19
+## 1.0 / 2025-12-24
 
 - Switch packaging to `pyproject.toml` with Hatchling and embed pytest config.
 - Drop legacy distutils backend and require Meson for f2py builds.
@@ -13,6 +13,10 @@
 - Add Ruff tooling and format checks for the codebase.
 - Skip Fortran/BLAS-dependent tests when toolchain deps are missing.
 - Fix README test parser edge case for missing prefixes.
+- Direct dependencies on meson and ninja simplify installation and
+  configuration.
+- The ability to open and try the documentation notebook in Google
+  Colab or GitHub Codespace without a local installation.
 
 ## 0.9 / 2024-05-27
 
