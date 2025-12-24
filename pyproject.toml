@@ -13,7 +13,7 @@ authors = [
   { name = "Martin Gaitan", email = "gaitan@gmail.com" },
 ]
 keywords = ["ipython", "notebook", "fortran", "f2py", "science"]
-dependencies = ["ipython", "numpy"]
+dependencies = ["ipython", "numpy", "meson", "ninja"]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Environment :: Web Environment",
