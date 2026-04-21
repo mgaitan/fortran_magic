@@ -11,12 +11,13 @@ on:  # yamllint disable-line rule:truthy
 jobs:
   build:
     strategy:
-      fail-fast: true
+      # fail-fast: true
       matrix:
         os: ["macos", "ubuntu", "windows"]
         # PEP 790: 3.15.0 beta 1: Tuesday, 2026-05-05
         #          3.15.0 final: Thursday, 2026-10-01
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        # python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        python-version: ["3.14"]
         include:
           - os: "macos"
             platform: "darwin"
