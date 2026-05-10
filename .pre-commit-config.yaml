@@ -1,0 +1,20 @@
+---
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+        args: ["--markdown-linebreak-ext=md"]
+      - id: no-commit-to-branch
+  - repo: local
+    hooks:
+      - id: yamllint
+        name: Start `yamllint`
+        entry: ./.pre-commit-yamllint.sh
+        language: script
+      - id: ruff
+        name: Start `ruff`
+        entry: ./.pre-commit-ruff.sh
+        language: script

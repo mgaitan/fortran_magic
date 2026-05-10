@@ -1,0 +1,20 @@
+---
+name: Clean cache by push
+
+# https://github.com/marketplace/actions/clean-cache
+# https://github.com/OpenGrabeso/clean-cache
+
+on:  # yamllint disable-line rule:truthy
+  push:
+    branches: ['**']
+
+jobs:
+  clean:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - uses: opengrabeso/clean-cache@v1.1.0
+        with:
+          post: true
+          keep: 2

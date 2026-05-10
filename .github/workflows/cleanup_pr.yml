@@ -1,0 +1,22 @@
+---
+name: Clean PR
+
+# https://github.com/marketplace/actions/clean-cache
+# https://github.com/OpenGrabeso/clean-cache
+
+on:  # yamllint disable-line rule:truthy
+  pull_request:
+    types:
+      - closed
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+      pull-requests: read
+    steps:
+
+      - name: Clean cache for the branch name
+        uses: opengrabeso/clean-cache@v1.1.0

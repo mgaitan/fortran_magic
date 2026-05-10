@@ -12,6 +12,7 @@ import warnings
 
 import IPython.core.interactiveshell as ici
 import IPython.paths
+import numpy as np
 import pytest
 
 pytestmark = pytest.mark.requires_fortran
@@ -74,6 +75,11 @@ class Cish:
         """Call `%fortran_config` and check success."""
 
         if flgs is not None:
+            # FIXME: may be add "--freethreading-compatible" to
+            # `numpy_correct_compilers`, but `numpy_correct_compilers` seems
+            # broken
+            if np.__version__ >= "2.1":
+                flgs = "--extra '--freethreading-compatible'" + " " + flgs
             if self.numpy_correct_compilers:
                 flgs = self.numpy_correct_compilers + " " + flgs
             elif not flgs:
