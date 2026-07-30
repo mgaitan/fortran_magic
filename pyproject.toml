@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "fortran-magic"
 dynamic = ["version"]
-description = "An extension for IPython that help to use Fortran in your interactive session."
+description = "An IPython extension for compiling and using Fortran code interactively."
 readme = "README.md"
 requires-python = ">=3.10,<3.16"
 license = { file = "LICENSE" }
@@ -36,8 +36,10 @@ classifiers = [
 
 [project.urls]
 Homepage = "https://github.com/mgaitan/fortran_magic"
-Documentation = "http://nbviewer.ipython.org/urls/raw.github.com/mgaitan/fortran_magic/master/documentation.ipynb"
+Documentation = "https://nbviewer.org/github/mgaitan/fortran_magic/blob/master/documentation.ipynb"
 Changelog = "https://github.com/mgaitan/fortran_magic/blob/master/CHANGES.md"
+Repository = "https://github.com/mgaitan/fortran_magic"
+Issues = "https://github.com/mgaitan/fortran_magic/issues"
 
 [dependency-groups]
 dev = [
@@ -49,6 +51,7 @@ dev = [
   "ninja",
   "pickleshare",
   "pytest",
+  "prek",
   "ruff",
   "tomli; python_version < '3.11'",
   "cmake",
@@ -72,7 +75,7 @@ include = [
 include = ["fortranmagic.py"]
 
 [tool.pytest.ini_options]
-addopts = "-m \"not paranoid\""
+addopts = ["-m", "not paranoid", "--strict-markers", "--strict-config", "-ra"]
 markers = [
   "fast: test only cells with tags 'fast'",
   "medium: test untagged cells and with tags 'fast'",
@@ -118,3 +121,6 @@ select = [
 "documentation.ipynb" = ["F821", "PLR2004"]
 "fortranmagic.py" = ["ANN", "C901", "PLR0912", "PLR0915", "TRY003"]
 "tests/*.py" = ["ANN", "C901", "PLR0912", "PLR0915", "PLR2004", "PLC0415", "PLW0603"]
+
+[tool.uv]
+exclude-newer = "1 week"
