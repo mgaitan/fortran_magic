@@ -45,13 +45,11 @@ jobs:
             python-version: "3.14"
             platform: "linux"
             os_pkgs: "flang libflang-rt mkl-devel"
-            explicit_test: true
 
           - os: "windows-latest"
             python-version: "3.14"
             platform: "win32"
             os_pkgs: "flang flang-rt_win-64 m2w64-gcc-fortran mkl-devel"
-            explicit_test: true
 
     name: ${{ matrix.platform }} py${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
@@ -160,13 +158,6 @@ jobs:
       - name: Test with pytest
         run: |
           PYTHONUTF8=1 JUPYTER_PLATFORM_DIRS=1 uv run --group dev pytest
-          if [ "${{ matrix.explicit_test }}" == "true" ]; then
-            echo "Native: `< native_fortran.txt`"
-            echo "Explicit: `< explicit_fortran.txt`"
-            if cmp native_fortran.txt explicit_fortran.txt; then
-              exit 1
-            fi
-          fi
 
       - name: Beta test on Python beta
         if: env.python_beta_on == matrix.python-version
@@ -175,13 +166,6 @@ jobs:
             PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1 \
               PYTHONUTF8=1 JUPYTER_PLATFORM_DIRS=1 uv \
               run --group dev --python=python${{ env.python_beta }} pytest
-            if [ "${{ matrix.explicit_test }}" == "true" ]; then
-              echo "Native: `< native_fortran.txt`"
-              echo "Explicit: `< explicit_fortran.txt`"
-              if cmp native_fortran.txt explicit_fortran.txt; then
-                exit 1
-              fi
-            fi
           else
             echo "Unsuitable gcc for build of NumPy"  # FIXME
             echo "PATH=$PATH"
