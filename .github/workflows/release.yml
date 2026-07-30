@@ -20,5 +20,6 @@ jobs:
       - uses: astral-sh/setup-uv@v8.2.0
       - run: uv build
       - name: Generate publish attestations
-        uses: astral-sh/attest-action@f589a42a7efb6fe400b4f400de60b4bc90390027 # v0.0.6
+        # v0.0.6
+        uses: astral-sh/attest-action@f589a42a7efb6fe400b4f400de60b4bc90390027
       - run: uv publish
