@@ -15,7 +15,7 @@ compiled. The resulting module is imported and all of its symbols are injected i
 the user's namespace.
 
 - Homepage: https://github.com/mgaitan/fortran_magic
-- Documentation: see [this notebook](http://nbviewer.ipython.org/urls/raw.github.com/mgaitan/fortran_magic/master/documentation.ipynb)
+- Documentation: see [this notebook](https://nbviewer.org/github/mgaitan/fortran_magic/blob/master/documentation.ipynb)
 
 ## Install
 
