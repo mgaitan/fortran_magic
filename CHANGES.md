@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0 / 2026-05-10
+## 1.0 / 2026-07-30
 
 - Switch packaging to `pyproject.toml` with Hatchling and embed pytest config.
 - Drop legacy distutils backend and require Meson for f2py builds.
