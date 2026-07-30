@@ -51,5 +51,7 @@ def test_ipython_cells() -> None:
         if "Out" in c:
             np.testing.assert_allclose(float("\n".join(cells[-1]["Out"])), float(er.result))
             checked += 1
+        if c["In"][0].startswith("%load_ext") and np.lib.NumpyVersion(np.__version__) >= "2.1.0":
+            ish.run_cell("%fortran_config --extra '--freethreading-compatible'", store_history=False)
 
     assert success > 0 and checked > 0
