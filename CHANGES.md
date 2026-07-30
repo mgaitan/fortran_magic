@@ -4,8 +4,7 @@
 
 - Switch packaging to `pyproject.toml` with Hatchling and embed pytest config.
 - Drop legacy distutils backend and require Meson for f2py builds.
-- Support Python 3.10 through 3.14 (3.15 ready, CI tests for 3.15.0b1 or
-  above).
+- Support Python 3.10 through 3.14.
 - Convert README and changelog to Markdown.
 - Update release automation to build/publish with `uv`.
 - Stabilize IPython cache handling and test isolation.
