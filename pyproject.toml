@@ -7,7 +7,7 @@ name = "fortran-magic"
 dynamic = ["version"]
 description = "An IPython extension for compiling and using Fortran code interactively."
 readme = "README.md"
-requires-python = ">=3.10,<3.15"
+requires-python = ">=3.10,<3.16"
 license = { file = "LICENSE" }
 authors = [
   { name = "Martin Gaitan", email = "gaitan@gmail.com" },
@@ -28,6 +28,7 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3.15",
   "Programming Language :: Fortran",
   "Topic :: Software Development :: Libraries :: Python Modules",
   "Topic :: Scientific/Engineering",
