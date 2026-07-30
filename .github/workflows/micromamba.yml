@@ -3,45 +3,66 @@ name: micromamba/jupyter application
 
 on:  # yamllint disable-line rule:truthy
   push:
-    branches: ['*']
-
+    branches: [master]
   pull_request:
     branches: ['*']
+
+permissions:
+  contents: read
+
+env:
+  UV_MALWARE_CHECK: "1"
+  python_beta: "3.15"  # Latest pre-release version for beta tests, see logs
+  python_beta_on: "3.14"
 
 jobs:
   build:
     strategy:
       fail-fast: true
       matrix:
-        os: ["macos", "ubuntu", "windows"]
+        os: ["macos-latest", "ubuntu-latest", "windows-latest"]
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
         include:
-          - os: "macos"
+          - os: "macos-latest"
             platform: "darwin"
             os_pkgs: "fortran-compiler"
 
-          - os: "ubuntu"
-            platform: "linux"
-            os_pkgs: ""
+          - os: "macos-26-intel"
+            python-version: "3.14"
+            platform: "darwin-intel"
+            os_pkgs: "fortran-compiler"
 
-          - os: "windows"
+          - os: "ubuntu-latest"
+            platform: "linux"
+            os_pkgs: "mkl-devel"
+
+          - os: "windows-latest"
             platform: "win32"
-            os_pkgs: "m2w64-gcc-fortran"
+            os_pkgs: "m2w64-gcc-fortran mkl-devel"
+
+          # For fortran compiler example
+          - os: "ubuntu-latest"
+            python-version: "3.14"
+            platform: "linux"
+            os_pkgs: "flang libflang-rt mkl-devel"
+            explicit_test: true
+
+          - os: "windows-latest"
+            python-version: "3.14"
+            platform: "win32"
+            os_pkgs: "flang flang-rt_win-64 m2w64-gcc-fortran mkl-devel"
+            explicit_test: true
 
     name: ${{ matrix.platform }} py${{ matrix.python-version }}
-    runs-on: ${{ matrix.os }}-latest
+    runs-on: ${{ matrix.os }}
     defaults:
       run:
         shell: bash -el {0}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - name: Get current date
-        id: date
-        run: echo "date=$(date +%Y-%m-%d)" >> "${GITHUB_OUTPUT}"
-
-      - uses: mamba-org/setup-micromamba@v1
+      - uses: mamba-org/setup-micromamba@v3
         env:
           CACHE_NUMBER: 0  # modify to reset cache manually
         with:
@@ -51,17 +72,11 @@ jobs:
           environment-file: tests/base-environment.yml
           create-args: >-
             python=${{ matrix.python-version }} ${{ matrix.os_pkgs }}
-          cache-environment: false
-          cache-downloads: false
+          cache-environment: true
+          cache-downloads: true
 
-      - name: Configure pkg-config path
-        run: |
-          if [ "${{ matrix.platform }}" = "win32" ]; then
-            pkgconfig_path="$CONDA_PREFIX/Library/lib/pkgconfig"
-          else
-            pkgconfig_path="$CONDA_PREFIX/lib/pkgconfig"
-          fi
-          echo "PKG_CONFIG_PATH=$pkgconfig_path" >> "$GITHUB_ENV"
+      - name: Setup `uv` with caches by default
+        uses: astral-sh/setup-uv@v8.1.0
 
       - name: Lint with ruff & yamllint
         run: |
@@ -73,34 +88,27 @@ jobs:
           uv run --group dev ruff check .
           uv run --group dev ruff format --check .
 
-      - name: Workaround conda pkg-config for win32 f2py
-        if: ${{ matrix.platform == 'win32' }}
+      - name: Workaround conda pkg-config BLAS/LAPACK
         run: |
-          pc_dir="$CONDA_PREFIX/Library/lib/pkgconfig"
-          if [ -f "$pc_dir/mkl-sdl.pc" ]; then
-            cp -n "$pc_dir/mkl-sdl.pc" "$pc_dir/lapack.pc"
-            cp -n "$pc_dir/mkl-sdl.pc" "$pc_dir/blas.pc"
-          fi
-
-      - name: f2py workaround  # https://github.com/numpy/numpy/issues/26107
-        run: |
-          npv=`python -m numpy.f2py -v`
-          if [ "$npv" "<" "2" ]; then
-            ff=`python -c "import numpy.f2py; print(numpy.f2py.__file__)"`
-            mbt=`dirname $ff`/_backends/meson.build.template
-            mv "$mbt" "$mbt".orig
-            cp "$mbt".orig "$mbt"
-            sed \
-              -e "/import('python').find_installation(/s/'\${python}', //" \
-              -i -- "$mbt"
-            if diff -w -u "$mbt".orig "$mbt" ; then
-              echo "FAIL: Workaround patch"
-              exit 2
+          if pkg-config --exists mkl-sdl; then
+            mkl_sdl_dir="`pkg-config --variable=pcfiledir mkl-sdl`"
+            mkl_sdl="$mkl_sdl_dir/mkl-sdl.pc"
+            if pkg-config --exists blas; then
+              echo "Have blas in `pkg-config --variable=pcfiledir blas`"
             else
-              echo "OK: Workaround patch"
+              blas="$mkl_sdl_dir/blas.pc"
+              echo "Hack, use: $mkl_sdl as $blas"
+              cp "$mkl_sdl" "$blas"
+            fi
+            if pkg-config --exists lapack; then
+              echo "Have lapack in `pkg-config --variable=pcfiledir lapack`"
+            else
+              lapack="$mkl_sdl_dir/lapack.pc"
+              echo "Hack, use: $mkl_sdl as $lapack"
+              cp "$mkl_sdl" "$lapack"
             fi
           else
-            echo "Workaround don't needed"
+            echo "Don't have mkl-sdl"
           fi
 
       - name: Precheck f2py
@@ -114,10 +122,12 @@ jobs:
           echo "ninja:     " ; ninja --version
           cmake --version
           echo "pkg-config:" ; pkg-config --version
+          type pkg-config
+          echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH"
 
           pkg-config --list-all
 
-          ld_lapack="--dep lapack --dep blas"
+          ld_lapack="--dep lapack"
 
           python -m numpy.f2py --backend meson --verbose -c tests/fib1.f -m fib1
           python -c 'if 1:
@@ -128,9 +138,6 @@ jobs:
             fib1.fib(a)
             print(a)
             '
-
-          python -m numpy.f2py --verbose --help-link blas
-          python -m numpy.f2py --verbose --help-link lapack
 
           if pkg-config --exists blas && pkg-config --exists lapack; then
             python -m numpy.f2py --backend meson --verbose \
@@ -152,5 +159,32 @@ jobs:
 
       - name: Test with pytest
         run: |
-          JUPYTER_PLATFORM_DIRS=1 uv run --group dev pytest
+          PYTHONUTF8=1 JUPYTER_PLATFORM_DIRS=1 uv run --group dev pytest
+          if [ "${{ matrix.explicit_test }}" == "true" ]; then
+            echo "Native: `< native_fortran.txt`"
+            echo "Explicit: `< explicit_fortran.txt`"
+            if cmp native_fortran.txt explicit_fortran.txt; then
+              exit 1
+            fi
+          fi
+
+      - name: Beta test on Python beta
+        if: env.python_beta_on == matrix.python-version
+        run: |
+          if [ "${{ matrix.platform }}" != "win32" ]; then
+            PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1 \
+              PYTHONUTF8=1 JUPYTER_PLATFORM_DIRS=1 uv \
+              run --group dev --python=python${{ env.python_beta }} pytest
+            if [ "${{ matrix.explicit_test }}" == "true" ]; then
+              echo "Native: `< native_fortran.txt`"
+              echo "Explicit: `< explicit_fortran.txt`"
+              if cmp native_fortran.txt explicit_fortran.txt; then
+                exit 1
+              fi
+            fi
+          else
+            echo "Unsuitable gcc for build of NumPy"  # FIXME
+            echo "PATH=$PATH"
+            gcc --version || echo No gcc
+          fi
 ...

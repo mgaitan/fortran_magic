@@ -13,7 +13,7 @@ dependencies:
   - yamllint
   - pytest
   - pytest-cov
-  - uv
+  # - uv                  # use external install for caching
   - meson
   - ninja
   - cmake
